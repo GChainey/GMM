@@ -4,8 +4,10 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { ensureUserRow } from "@/lib/auth";
+import { isDemoMode } from "@/lib/demo";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
+import { DemoDrawer } from "@/components/demo-drawer";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function AppLayout({
@@ -58,6 +60,7 @@ export default async function AppLayout({
           God Mode May · MMXXVI
         </footer>
       </SidebarInset>
+      {isDemoMode() && <DemoDrawer />}
     </SidebarProvider>
   );
 }

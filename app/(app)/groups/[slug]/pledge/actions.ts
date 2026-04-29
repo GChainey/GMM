@@ -100,7 +100,7 @@ export async function savePledgeAction(formData: FormData) {
     throw new Error("Thou must take the vow before inscribing a pledge.");
   }
 
-  if (isLocked()) {
+  if (await isLocked()) {
     throw new Error(
       "The ritual has begun — pledges are sealed. They cannot be amended.",
     );

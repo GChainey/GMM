@@ -14,7 +14,7 @@ import {
   challengeStartIso,
   hasChallengeStarted,
   isChallengeOver,
-  todayIsoInTz,
+  resolveToday,
 } from "@/lib/dates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,9 +60,9 @@ export default async function DashboardPage() {
         .where(eq(dailyCheckins.userId, userId))
     : [];
 
-  const todayIso = todayIsoInTz("UTC");
-  const started = hasChallengeStarted("UTC");
-  const over = isChallengeOver("UTC");
+  const todayIso = await resolveToday("UTC");
+  const started = hasChallengeStarted(todayIso);
+  const over = isChallengeOver(todayIso);
 
   const cards = memberships.map((m) => {
     const pledge = userPledges.find((p) => p.groupId === m.groupId);
@@ -85,7 +85,7 @@ export default async function DashboardPage() {
         amount: c.amount,
       })),
       strikeLimit: m.group.strikeLimit,
-      timezone: "UTC",
+      todayIso,
     });
     return { membership: m, pledge, activities: acts, status };
   });

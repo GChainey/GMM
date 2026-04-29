@@ -12,7 +12,7 @@ import {
   pledges,
 } from "@/db/schema";
 import { ensureUserRow, requireUserId } from "@/lib/auth";
-import { hasChallengeStarted, isChallengeDate, todayIsoInTz } from "@/lib/dates";
+import { hasChallengeStarted, isChallengeDate, resolveToday } from "@/lib/dates";
 
 const toggleSchema = z.object({
   activityId: z.string().min(1),
@@ -47,13 +47,13 @@ export async function toggleCheckinAction(input: {
   await ensureUserRow();
   const data = toggleSchema.parse(input);
 
-  if (!hasChallengeStarted("UTC")) {
+  const today = await resolveToday("UTC");
+  if (!hasChallengeStarted(today)) {
     throw new Error("The ritual has not begun. Daily rites unlock May 1st.");
   }
   if (!isChallengeDate(data.date)) {
     throw new Error("Only May dates may be marked.");
   }
-  const today = todayIsoInTz("UTC");
   if (data.date > today) {
     throw new Error("The future cannot be marked.");
   }
@@ -166,13 +166,13 @@ export async function setAmountAction(input: {
   await ensureUserRow();
   const data = amountSchema.parse(input);
 
-  if (!hasChallengeStarted("UTC")) {
+  const today = await resolveToday("UTC");
+  if (!hasChallengeStarted(today)) {
     throw new Error("The ritual has not begun. Tallies open May 1st.");
   }
   if (!isChallengeDate(data.date)) {
     throw new Error("Only May dates may be tallied.");
   }
-  const today = todayIsoInTz("UTC");
   if (data.date > today) {
     throw new Error("The future cannot be tallied.");
   }
@@ -230,7 +230,7 @@ export async function saveJournalAction(input: {
   if (!isChallengeDate(data.date)) {
     throw new Error("Journals are only kept for May.");
   }
-  const today = todayIsoInTz("UTC");
+  const today = await resolveToday("UTC");
   if (data.date > today) {
     throw new Error("The future cannot be inscribed.");
   }

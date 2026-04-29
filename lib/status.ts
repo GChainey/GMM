@@ -2,7 +2,6 @@ import {
   challengeDates,
   challengeEndIso,
   hasChallengeStarted,
-  todayIsoInTz,
 } from "./dates";
 import type { ActivityKind } from "@/db/schema";
 
@@ -25,7 +24,7 @@ export interface ComputeStatusInput {
   activities: ActivityLite[];
   checkins: CheckinLite[];
   strikeLimit: number;
-  timezone: string | null | undefined;
+  todayIso: string;
 }
 
 export interface ComputedStatus {
@@ -48,8 +47,7 @@ export interface MonthlyProgress {
 }
 
 export function computeStatus(input: ComputeStatusInput): ComputedStatus {
-  const { activities, checkins, strikeLimit, timezone } = input;
-  const todayIso = todayIsoInTz(timezone);
+  const { activities, checkins, strikeLimit, todayIso } = input;
   const dates = challengeDates();
   const endIso = challengeEndIso();
 
@@ -112,7 +110,7 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
     };
   });
 
-  if (!hasChallengeStarted(timezone)) {
+  if (!hasChallengeStarted(todayIso)) {
     return {
       status: "pending",
       strikes: 0,
@@ -176,9 +174,8 @@ export interface CellState {
 export function buildCells(
   activities: ActivityLite[],
   checkins: CheckinLite[],
-  timezone: string | null | undefined,
+  todayIso: string,
 ): Map<string, CellState> {
-  const todayIso = todayIsoInTz(timezone);
   const cells = new Map<string, CellState>();
   const dailyIds = activities
     .filter((a) => a.kind === "do" || a.kind === "abstain")

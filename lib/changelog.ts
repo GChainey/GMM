@@ -7,6 +7,16 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-04-29",
+    title: "A cloister out of time",
+    items: [
+      "Demo mode unsealed: set NEXT_PUBLIC_DEMO_MODE=1 and a wand-marked drawer appears at ⌘K, granting dominion over the calendar.",
+      "Travel forward and back through May, jump to any date, or release the override to resume real time. Pledges no longer lock when the demo clock pretends it's April.",
+      "Found the Demo Council with a single tap — six fictive mortals (Apollo, Athena, Hermes, Artemis, Dionysus, Hephaestus) take their vows and back-fill rites to the demo today, each at their own habit rate.",
+      "Roll today, mark a mortal complete, mark a mortal missed, or wipe the council clean — all from the drawer, all without leaving the page.",
+    ],
+  },
+  {
+    date: "2026-04-29",
     title: "Bells beneath the marble",
     items: [
       "The temple finds its voice. A small chorus of synthesized bells now answers thy chief deeds — soft enough for a quiet office, gone in a breath.",
