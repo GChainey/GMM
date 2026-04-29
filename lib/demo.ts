@@ -2,12 +2,20 @@
 // today-resolver live in lib/dates.ts so all callers see one chokepoint.
 
 export function isDemoMode(): boolean {
-  return process.env.NEXT_PUBLIC_DEMO_MODE === "1";
+  // Always on in dev so `npm run dev` is a one-step demo. Prod stays opt-in
+  // via NEXT_PUBLIC_DEMO_MODE=1. Set NEXT_PUBLIC_DEMO_MODE=0 in dev to disable.
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "0") return false;
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "1") return true;
+  return process.env.NODE_ENV !== "production";
 }
 
 export const DEMO_GROUP_SLUG = "demo-council";
 export const DEMO_GROUP_NAME = "The Demo Council";
 export const DEMO_USER_PREFIX = "demo_";
+
+// When real today is outside May 2026 (i.e. always, today), fall back to this
+// so the demo lands midway through the challenge with no clock-setting needed.
+export const DEMO_DEFAULT_TODAY = "2026-05-15";
 
 export interface DemoMemberSeed {
   id: string;
