@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CHANGELOG } from "@/lib/changelog";
-import { FeedbackForm } from "@/components/feedback-form";
 
 export default function ChangelogPage() {
   return (
@@ -13,7 +12,9 @@ export default function ChangelogPage() {
           Changelog
         </h1>
         <p className="mt-2 max-w-xl text-muted-foreground">
-          Recently inscribed upon the temple walls.
+          Recently inscribed upon the temple walls. Found a bug or have a vow
+          to add? Use the <span className="font-semibold">Feedback</span>{" "}
+          button at the top of every page.
         </p>
       </header>
 
@@ -38,8 +39,6 @@ export default function ChangelogPage() {
           </Card>
         ))}
       </div>
-
-      <FeedbackForm />
     </div>
   );
 }
