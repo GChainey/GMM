@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:port": "node scripts/dev.mjs",
+    "dev": "node scripts/dev.mjs",
+    "dev:fixed": "next dev",
     "build": "node scripts/migrate.mjs && next build",
     "start": "next start",
     "lint": "eslint",
