@@ -50,7 +50,7 @@ export default async function AppLayout({
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" user={navUser} />
+      <AppSidebar user={navUser} />
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col">{children}</div>
