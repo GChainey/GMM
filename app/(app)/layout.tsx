@@ -1,57 +1,63 @@
-import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
+import { eq } from "drizzle-orm";
+import { currentUser } from "@clerk/nextjs/server";
+
+import { db } from "@/db";
+import { users } from "@/db/schema";
 import { ensureUserRow } from "@/lib/auth";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await ensureUserRow();
+  const row = await ensureUserRow();
+
+  let navUser = {
+    name: row?.displayName ?? "Mortal",
+    email: null as string | null,
+    avatarUrl: row?.avatarUrl ?? null,
+  };
+
+  if (row) {
+    const [fresh] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, row.id))
+      .limit(1);
+
+    const clerk = await currentUser();
+    const email =
+      clerk?.emailAddresses?.find(
+        (e) => e.id === clerk.primaryEmailAddressId,
+      )?.emailAddress ?? null;
+
+    navUser = {
+      name: fresh?.displayName ?? row.displayName,
+      email,
+      avatarUrl: fresh?.avatarUrl ?? row.avatarUrl,
+    };
+  }
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border/60 bg-background/85 px-6 py-4 backdrop-blur md:px-10">
-        <div className="flex items-center gap-8">
-          <Link
-            href="/dashboard"
-            className="font-display text-lg tracking-[0.3em]"
-          >
-            G·M·M
-          </Link>
-          <nav className="hidden items-center gap-6 font-display text-sm tracking-widest text-muted-foreground md:flex">
-            <Link href="/dashboard" className="hover:text-foreground">
-              Altar
-            </Link>
-            <Link href="/check-in" className="hover:text-foreground">
-              Daily Rite
-            </Link>
-            <Link href="/groups" className="hover:text-foreground">
-              Pantheons
-            </Link>
-            <Link href="/profile" className="hover:text-foreground">
-              Visage
-            </Link>
-            <Link href="/changelog" className="hover:text-foreground">
-              Codex
-            </Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-3">
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox:
-                  "h-9 w-9 ring-2 ring-gold/60 ring-offset-2 ring-offset-background",
-              },
-            }}
-          />
-        </div>
-      </header>
-      <main className="flex-1">{children}</main>
-      <footer className="border-t border-border/60 px-6 py-6 text-center font-display text-xs tracking-widest text-muted-foreground md:px-10">
-        God Mode May · MMXXVI
-      </footer>
-    </div>
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--header-height": "calc(var(--spacing) * 12)",
+        } as React.CSSProperties
+      }
+    >
+      <AppSidebar variant="inset" user={navUser} />
+      <SidebarInset>
+        <SiteHeader />
+        <div className="flex flex-1 flex-col">{children}</div>
+        <footer className="border-t border-border/60 px-6 py-6 text-center font-display text-xs tracking-widest text-muted-foreground md:px-10">
+          God Mode May · MMXXVI
+        </footer>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
