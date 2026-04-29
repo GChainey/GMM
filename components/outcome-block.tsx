@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 
 interface OutcomeBlockProps {
   slug: string;
+  activityId: string;
+  activityLabel: string;
   outcomeText: string;
   achievedAt: string | null;
   canEdit: boolean;
@@ -19,6 +21,8 @@ interface OutcomeBlockProps {
 
 export function OutcomeBlock({
   slug,
+  activityId,
+  activityLabel,
   outcomeText,
   achievedAt,
   canEdit,
@@ -32,7 +36,7 @@ export function OutcomeBlock({
   function toggle() {
     startTransition(async () => {
       try {
-        await markOutcomeShippedAction({ slug, shipped: !shipped });
+        await markOutcomeShippedAction({ activityId, shipped: !shipped });
         if (!shipped) playSound("outcomeShipped");
         toast.success(
           shipped ? "Outcome unmarked." : "Outcome shipped — kudos.",
@@ -55,11 +59,10 @@ export function OutcomeBlock({
         )}
       >
         <p className="font-display text-xs uppercase tracking-[0.3em] text-muted-foreground">
-          Month&apos;s end outcome
+          {activityLabel} — month&apos;s end
         </p>
         <p className="mt-1 text-sm italic text-muted-foreground">
-          Name what thou shalt ship on May 31 — a recital, a release, an
-          exhibition.
+          Name what this rite ships on May 31.
         </p>
         <Button
           asChild
@@ -90,7 +93,7 @@ export function OutcomeBlock({
           ) : (
             <Sparkles className="h-3 w-3 text-gold" />
           )}
-          {shipped ? "Shipped" : "Month's end outcome"}
+          {activityLabel} — {shipped ? "shipped" : "month's end"}
         </p>
         {canEdit && (
           <Button

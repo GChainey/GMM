@@ -21,6 +21,7 @@ interface ActivityDraft {
   kind: ActivityKind;
   targetAmount: string;
   unit: string;
+  outcomeText: string;
 }
 
 export interface PledgeOptionLite {
@@ -31,6 +32,15 @@ export interface PledgeOptionLite {
   isSensitive: boolean;
 }
 
+export interface CharityContext {
+  enabled: boolean;
+  selection: "admin" | "individual";
+  groupCharityName: string;
+  groupCharityUrl: string;
+  defaultName: string;
+  defaultUrl: string;
+}
+
 interface PledgeFormProps {
   slug: string;
   defaultPledgeText: string;
@@ -38,12 +48,12 @@ interface PledgeFormProps {
   defaultPunishmentOptionId: string | null;
   defaultRewardText: string;
   defaultPunishmentText: string;
-  defaultOutcomeText: string;
   defaultActivities: ActivityDraft[];
   rewardOptions: PledgeOptionLite[];
   punishmentOptions: PledgeOptionLite[];
   allowCustomReward: boolean;
   allowCustomPunishment: boolean;
+  charity: CharityContext;
 }
 
 const KIND_LABEL: Record<ActivityKind, string> = {
@@ -67,17 +77,26 @@ export function PledgeForm({
   defaultPunishmentOptionId,
   defaultRewardText,
   defaultPunishmentText,
-  defaultOutcomeText,
   defaultActivities,
   rewardOptions,
   punishmentOptions,
   allowCustomReward,
   allowCustomPunishment,
+  charity,
 }: PledgeFormProps) {
   const initial: ActivityDraft[] =
     defaultActivities.length > 0
       ? defaultActivities
-      : [{ label: "", description: "", kind: "do", targetAmount: "", unit: "" }];
+      : [
+          {
+            label: "",
+            description: "",
+            kind: "do",
+            targetAmount: "",
+            unit: "",
+            outcomeText: "",
+          },
+        ];
   const [acts, setActs] = useState<ActivityDraft[]>(initial);
   const [isPending, startTransition] = useTransition();
   const playSound = useSounds();
@@ -110,7 +129,14 @@ export function PledgeForm({
   function add() {
     setActs((curr) => [
       ...curr,
-      { label: "", description: "", kind: "do", targetAmount: "", unit: "" },
+      {
+        label: "",
+        description: "",
+        kind: "do",
+        targetAmount: "",
+        unit: "",
+        outcomeText: "",
+      },
     ]);
     playSound("riteAdded");
   }
@@ -128,6 +154,7 @@ export function PledgeForm({
       kind: ActivityKind;
       targetAmount: number | null;
       unit: string | null;
+      outcomeText: string;
     }> = [];
     for (const a of acts) {
       const label = a.label.trim();
@@ -151,6 +178,7 @@ export function PledgeForm({
         kind,
         targetAmount,
         unit,
+        outcomeText: a.outcomeText.trim(),
       });
     }
     if (cleaned.length === 0) {
@@ -165,6 +193,18 @@ export function PledgeForm({
     if (!punishmentChoice) {
       toast.error("Pick a punishment.");
       return;
+    }
+    if (charity.enabled && charity.selection === "individual") {
+      const name = String(formData.get("charityName") ?? "").trim();
+      if (!name) {
+        toast.error("Name thy cause.");
+        return;
+      }
+      const url = String(formData.get("charityUrl") ?? "").trim();
+      if (url && !/^https?:\/\//i.test(url)) {
+        toast.error("Charity link must begin with http:// or https://.");
+        return;
+      }
     }
 
     formData.set(
@@ -213,24 +253,6 @@ export function PledgeForm({
               maxLength={4000}
             />
           </div>
-          <div className="grid gap-2 rounded-md border border-gold/40 bg-gold/5 p-3">
-            <Label htmlFor="outcomeText" className="font-display tracking-widest">
-              Month&apos;s end — what thou shalt ship
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              The daily rites lead somewhere. Name the deliverable thou wilt show
-              the pantheon on May 31 — a recital, a release, an exhibition, a
-              demo. Be specific.
-            </p>
-            <Textarea
-              id="outcomeText"
-              name="outcomeText"
-              rows={3}
-              defaultValue={defaultOutcomeText}
-              placeholder="e.g. Hold a Zoom recital with three original songs. Or: open-studio show of 30 drawings. Or: publish a 2,000-word essay."
-              maxLength={1000}
-            />
-          </div>
           <div className="grid gap-4 md:grid-cols-2">
             <OptionPicker
               kind="reward"
@@ -257,6 +279,75 @@ export function PledgeForm({
               selected={punishmentSelected}
             />
           </div>
+          {charity.enabled && (
+            <div className="grid gap-2 rounded-md border border-divine/40 bg-divine/5 p-3">
+              <p className="font-display text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                Charity mode
+              </p>
+              {charity.selection === "individual" ? (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Name the cause thou wouldst champion. Should an ascended
+                    pantheon-mate stand whilst thou fallest, thy forfeit flows
+                    to <em>their</em> charity — not thine. Choose a cause thou
+                    wouldst gladly fund either way.
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
+                    <div className="grid gap-2">
+                      <Label htmlFor="charityName">Charity name</Label>
+                      <Input
+                        id="charityName"
+                        name="charityName"
+                        defaultValue={charity.defaultName}
+                        maxLength={120}
+                        placeholder="e.g. Médecins Sans Frontières"
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="charityUrl">Link (optional)</Label>
+                      <Input
+                        id="charityUrl"
+                        name="charityUrl"
+                        type="url"
+                        defaultValue={charity.defaultUrl}
+                        maxLength={500}
+                        placeholder="https://…"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm">
+                    The founder hath chosen one cause for all:{" "}
+                    <span className="font-display tracking-wide">
+                      {charity.groupCharityName || "(unnamed)"}
+                    </span>
+                    {charity.groupCharityUrl && (
+                      <>
+                        {" "}
+                        —{" "}
+                        <a
+                          href={charity.groupCharityUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline"
+                        >
+                          link
+                        </a>
+                      </>
+                    )}
+                    .
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Every fall in this pantheon feeds this cause. No further
+                    choice is required.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -264,7 +355,8 @@ export function PledgeForm({
         <CardHeader>
           <CardTitle className="font-display text-2xl">Rites & Tallies</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Three kinds of vow. Pick one for each row.
+            Three kinds of vow. Each rite leads to an outcome — name what thou
+            shalt ship on May 31.
           </p>
           <ul className="mt-2 grid gap-1 text-xs text-muted-foreground md:grid-cols-3">
             <li>
@@ -358,6 +450,26 @@ export function PledgeForm({
                     />
                   </div>
                 )}
+                <div className="grid gap-1 rounded-md border border-gold/40 bg-gold/5 p-2">
+                  <Label className="font-display text-[0.7rem] tracking-widest text-muted-foreground">
+                    Month&apos;s end — what this rite ships
+                  </Label>
+                  <Textarea
+                    rows={2}
+                    value={a.outcomeText}
+                    onChange={(e) =>
+                      update(i, { outcomeText: e.target.value })
+                    }
+                    placeholder={
+                      a.kind === "abstain"
+                        ? "e.g. 30-day clear-headed journal published"
+                        : a.kind === "monthly_total"
+                          ? "e.g. A logged 75-km route map"
+                          : "e.g. A Zoom recital with three original songs"
+                    }
+                    maxLength={1000}
+                  />
+                </div>
               </div>
               <Button
                 type="button"

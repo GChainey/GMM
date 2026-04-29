@@ -11,8 +11,35 @@ export const CHANGELOG: ChangelogEntry[] = [
     items: [
       "The temple finds its voice. A small chorus of synthesized bells now answers thy chief deeds — soft enough for a quiet office, gone in a breath.",
       "Inscribing a pledge tolls a triple chime. Adding or unbinding a rite earns a brief pop. Each daily check brings a confident tick; tallies inscribe with a gold-leaf shimmer.",
-      "Proofs land with a shutter's whisper, and the month's-end outcome, once shipped, ascends through three triumphant tones.",
+      "Proofs land with a shutter's whisper, and a rite's outcome, once shipped, ascends through three triumphant tones.",
       "Quietly: the rites are pure synthesis — no audio files shipped — and we honour `prefers-reduced-motion`, so any mortal who hath asked for silence shall receive it.",
+    ],
+  },
+  {
+    date: "2026-04-29",
+    title: "Charity mode — the fall feeds a cause",
+    items: [
+      "Pantheons gain a Charity mode. When a mortal falls, their forfeit need not be silver in a jar — let it flow to a worthy cause instead.",
+      "Founders may choose the rule of the rite: each mortal names their own charity (a fall then feeds the winner's cause), or the founder picks one cause for all (every fall feeds the same coffer).",
+      "Inscribe thy chosen cause alongside thy reward and punishment. Names appear on the pantheon page, and a link may be set for the truly diligent.",
+    ],
+  },
+  {
+    date: "2026-04-29",
+    title: "Visage save restored, gaze made plain",
+    items: [
+      "Saving thy visage no longer angers the server — the artisan's chisel reaches the marble. (A wayward import was summoning React rites in the wrong sanctum.)",
+      "The gaze rail now actually moves the eyes within the face, in all four directions of the compass and their corners — and works at any depth, even None.",
+      "The 3D depth tilt has been re-aligned with the gaze: looking right tips right, looking up tips up, as the gods intended.",
+    ],
+  },
+  {
+    date: "2026-04-29",
+    title: "One rite, one outcome",
+    items: [
+      "Outcomes leave the pledge and bind to each rite. A habit of guitar each dawn ships a recital; an hour of writing each night ships an EP. The deliverable belongs to the deed, not the pantheon.",
+      "Inscribe an outcome beside every rite when thou amend thy pledge. Each may be marked shipped on its own from the dashboard or pantheon — every trophy stands separately.",
+      "Existing outcomes were carried forward onto the first rite of each pledge so naught was lost in the move.",
     ],
   },
   {

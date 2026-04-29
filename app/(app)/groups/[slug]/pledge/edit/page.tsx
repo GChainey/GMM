@@ -5,6 +5,7 @@ import { activities, groups, pledgeOptions, pledges } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
 import { isLocked } from "@/lib/dates";
 import { PledgeForm, type PledgeOptionLite } from "@/components/pledge-form";
+import type { CharitySelection } from "@/db/schema";
 
 interface EditPledgePageProps {
   params: Promise<{ slug: string }>;
@@ -86,7 +87,6 @@ export default async function EditPledgePage({ params }: EditPledgePageProps) {
         defaultPunishmentOptionId={pledge.punishmentOptionId}
         defaultRewardText={pledge.rewardText}
         defaultPunishmentText={pledge.punishmentText}
-        defaultOutcomeText={pledge.outcomeText}
         defaultActivities={acts.map((a) => ({
           id: a.id,
           label: a.label,
@@ -95,11 +95,20 @@ export default async function EditPledgePage({ params }: EditPledgePageProps) {
           targetAmount:
             a.targetAmount != null ? String(a.targetAmount) : "",
           unit: a.unit ?? "",
+          outcomeText: a.outcomeText ?? "",
         }))}
         rewardOptions={rewardOptions}
         punishmentOptions={punishmentOptions}
         allowCustomReward={group.allowCustomReward}
         allowCustomPunishment={group.allowCustomPunishment}
+        charity={{
+          enabled: group.charityModeEnabled,
+          selection: group.charitySelection as CharitySelection,
+          groupCharityName: group.charityName,
+          groupCharityUrl: group.charityUrl,
+          defaultName: pledge.charityName,
+          defaultUrl: pledge.charityUrl,
+        }}
       />
     </div>
   );

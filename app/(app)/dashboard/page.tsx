@@ -87,7 +87,7 @@ export default async function DashboardPage() {
       strikeLimit: m.group.strikeLimit,
       timezone: "UTC",
     });
-    return { membership: m, pledge, activitiesCount: acts.length, status };
+    return { membership: m, pledge, activities: acts, status };
   });
 
   return (
@@ -155,7 +155,7 @@ export default async function DashboardPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {cards.map(({ membership, pledge, activitiesCount, status }) => (
+            {cards.map(({ membership, pledge, activities: acts, status }) => (
               <Card key={membership.groupId} className="marble-card">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-3">
@@ -186,7 +186,7 @@ export default async function DashboardPage() {
                       </p>
                       <div className="flex flex-wrap items-center gap-2 text-xs">
                         <Badge variant="outline" className="font-display">
-                          {activitiesCount} rites
+                          {acts.length} rites
                         </Badge>
                         <Badge variant="outline" className="font-display">
                           {status.strikes} strikes
@@ -195,17 +195,26 @@ export default async function DashboardPage() {
                           🔥 {status.currentStreak}-day streak
                         </Badge>
                       </div>
-                      <OutcomeBlock
-                        slug={membership.group.slug}
-                        outcomeText={pledge.outcomeText}
-                        achievedAt={
-                          pledge.outcomeAchievedAt
-                            ? pledge.outcomeAchievedAt.toISOString()
-                            : null
-                        }
-                        canEdit
-                        variant="compact"
-                      />
+                      {acts.length > 0 && (
+                        <div className="flex flex-col gap-2">
+                          {acts.map((a) => (
+                            <OutcomeBlock
+                              key={a.id}
+                              slug={membership.group.slug}
+                              activityId={a.id}
+                              activityLabel={a.label}
+                              outcomeText={a.outcomeText}
+                              achievedAt={
+                                a.outcomeAchievedAt
+                                  ? a.outcomeAchievedAt.toISOString()
+                                  : null
+                              }
+                              canEdit
+                              variant="compact"
+                            />
+                          ))}
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="flex items-center justify-between gap-2">
