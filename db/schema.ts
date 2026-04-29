@@ -50,6 +50,12 @@ export const groups = pgTable(
     allowCustomPunishment: boolean("allow_custom_punishment")
       .notNull()
       .default(true),
+    charityModeEnabled: boolean("charity_mode_enabled")
+      .notNull()
+      .default(false),
+    charitySelection: text("charity_selection").notNull().default("individual"),
+    charityName: text("charity_name").notNull().default(""),
+    charityUrl: text("charity_url").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -93,6 +99,8 @@ export const pledges = pgTable(
     punishmentText: text("punishment_text").notNull().default(""),
     rewardOptionId: text("reward_option_id"),
     punishmentOptionId: text("punishment_option_id"),
+    charityName: text("charity_name").notNull().default(""),
+    charityUrl: text("charity_url").notNull().default(""),
     lockedAt: timestamp("locked_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -210,6 +218,9 @@ export const PLEDGE_OPTION_INTENSITIES = [
   "hardcore",
 ] as const;
 export type PledgeOptionIntensity = (typeof PLEDGE_OPTION_INTENSITIES)[number];
+
+export const CHARITY_SELECTIONS = ["admin", "individual"] as const;
+export type CharitySelection = (typeof CHARITY_SELECTIONS)[number];
 
 export type User = typeof users.$inferSelect;
 export type Group = typeof groups.$inferSelect;

@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { createGroupAction } from "../actions";
+import { CharityModeFields } from "@/components/charity-mode-fields";
 import { DEFAULT_PRESET, PRESETS, PRESET_KEYS } from "@/lib/pledge-options";
 
 export default function NewGroupPage() {
@@ -114,6 +115,8 @@ export default function NewGroupPage() {
                 })}
               </div>
             </fieldset>
+
+            <CharityModeFields />
 
             <div className="flex justify-end gap-2">
               <Button type="submit" className="gilded font-display tracking-widest">

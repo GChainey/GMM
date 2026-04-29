@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { CopyableInput } from "@/components/copyable-input";
+import { CharityModeFields } from "@/components/charity-mode-fields";
+import type { CharitySelection } from "@/db/schema";
 import {
   addCustomOptionAction,
   updateGroupSettingsAction,
@@ -169,6 +171,13 @@ export default async function GroupSettingsPage({ params }: SettingsPageProps) {
                 defaultChecked={group.allowCustomPunishment}
               />
             </div>
+
+            <CharityModeFields
+              defaultEnabled={group.charityModeEnabled}
+              defaultSelection={group.charitySelection as CharitySelection}
+              defaultName={group.charityName}
+              defaultUrl={group.charityUrl}
+            />
 
             <div className="flex justify-end gap-2">
               <Button
