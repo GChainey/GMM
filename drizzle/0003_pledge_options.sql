@@ -1,4 +1,4 @@
-CREATE TABLE "pledge_options" (
+CREATE TABLE IF NOT EXISTS "pledge_options" (
 	"id" text PRIMARY KEY NOT NULL,
 	"slug" text NOT NULL,
 	"label" text NOT NULL,
@@ -10,14 +10,18 @@ CREATE TABLE "pledge_options" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "groups" ADD COLUMN "allowed_reward_option_ids" text[] DEFAULT ARRAY[]::text[] NOT NULL;--> statement-breakpoint
-ALTER TABLE "groups" ADD COLUMN "allowed_punishment_option_ids" text[] DEFAULT ARRAY[]::text[] NOT NULL;--> statement-breakpoint
-ALTER TABLE "groups" ADD COLUMN "allow_custom_reward" boolean DEFAULT true NOT NULL;--> statement-breakpoint
-ALTER TABLE "groups" ADD COLUMN "allow_custom_punishment" boolean DEFAULT true NOT NULL;--> statement-breakpoint
-ALTER TABLE "pledges" ADD COLUMN "reward_option_id" text;--> statement-breakpoint
-ALTER TABLE "pledges" ADD COLUMN "punishment_option_id" text;--> statement-breakpoint
-ALTER TABLE "pledge_options" ADD CONSTRAINT "pledge_options_group_id_groups_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."groups"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "pledge_options_group_idx" ON "pledge_options" USING btree ("group_id");--> statement-breakpoint
+ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS "allowed_reward_option_ids" text[] DEFAULT ARRAY[]::text[] NOT NULL;--> statement-breakpoint
+ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS "allowed_punishment_option_ids" text[] DEFAULT ARRAY[]::text[] NOT NULL;--> statement-breakpoint
+ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS "allow_custom_reward" boolean DEFAULT true NOT NULL;--> statement-breakpoint
+ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS "allow_custom_punishment" boolean DEFAULT true NOT NULL;--> statement-breakpoint
+ALTER TABLE "pledges" ADD COLUMN IF NOT EXISTS "reward_option_id" text;--> statement-breakpoint
+ALTER TABLE "pledges" ADD COLUMN IF NOT EXISTS "punishment_option_id" text;--> statement-breakpoint
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'pledge_options_group_id_groups_id_fk') THEN
+    ALTER TABLE "pledge_options" ADD CONSTRAINT "pledge_options_group_id_groups_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."groups"("id") ON DELETE cascade ON UPDATE no action;
+  END IF;
+END $$;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "pledge_options_group_idx" ON "pledge_options" USING btree ("group_id");--> statement-breakpoint
 INSERT INTO "pledge_options" ("id", "slug", "label", "description", "type", "intensity", "is_sensitive") VALUES
   ('seed_reward_experience', 'experience', 'Experience', 'Treat thyself to a memorable outing or trip.', 'reward', 'standard', false),
   ('seed_reward_purchase', 'purchase', 'Purchase', 'Buy that thing thou hast long coveted.', 'reward', 'standard', false),
