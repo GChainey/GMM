@@ -82,7 +82,6 @@ export default async function NewPledgePage({ params }: NewPledgePageProps) {
         defaultPunishmentOptionId={null}
         defaultRewardText=""
         defaultPunishmentText=""
-        defaultOutcomeText=""
         defaultActivities={[
           {
             label: "",
@@ -90,6 +89,7 @@ export default async function NewPledgePage({ params }: NewPledgePageProps) {
             kind: "do",
             targetAmount: "",
             unit: "",
+            outcomeText: "",
           },
         ]}
         rewardOptions={rewardOptions}

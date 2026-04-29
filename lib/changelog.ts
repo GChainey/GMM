@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-04-29",
+    title: "One rite, one outcome",
+    items: [
+      "Outcomes leave the pledge and bind to each rite. A habit of guitar each dawn ships a recital; an hour of writing each night ships an EP. The deliverable belongs to the deed, not the pantheon.",
+      "Inscribe an outcome beside every rite when thou amend thy pledge. Each may be marked shipped on its own from the dashboard or pantheon — every trophy stands separately.",
+      "Existing outcomes were carried forward onto the first rite of each pledge so naught was lost in the move.",
+    ],
+  },
+  {
+    date: "2026-04-29",
     title: "Cloister narrows to icons",
     items: [
       "Sidebar now collapses to a slender column of sigils — press ⌘B and the names retreat, leaving only the icons of Altar, Daily Rite, Pantheons, Visage, and Codex. A pyramid stands watch where the brand once read.",
