@@ -1,11 +1,14 @@
-// Pick the first unused port from START_PORT upward and run `next dev` on it.
-// Useful in Conductor where many workspaces run in parallel and would otherwise
-// collide on port 3000.
+// Pick a port for `next dev`.
+// - If CONDUCTOR_PORT is set (Conductor reserves a stable port per workspace),
+//   bind to exactly that port. Hard-fail if it's taken — Conductor's preview
+//   URL is pinned to it, so silently drifting would be worse than a clear error.
+// - Otherwise, find the first unused port from START_PORT (default 3000) upward.
+//   This is what plain `npm run dev` outside Conductor does.
 //
 // Usage:
-//   npm run dev:port               # auto-pick from 3000
-//   npm run dev:port -- --port=3100  # auto-pick from 3100
-//   START_PORT=3100 npm run dev:port
+//   npm run dev                     # auto-pick from 3000 (or CONDUCTOR_PORT if set)
+//   npm run dev -- --port=3100      # auto-pick from 3100
+//   START_PORT=3100 npm run dev
 
 import { createServer } from "node:net";
 import { spawn } from "node:child_process";
@@ -13,11 +16,14 @@ import { spawn } from "node:child_process";
 const argPort = process.argv
   .find((a) => a.startsWith("--port="))
   ?.split("=")[1];
+const conductorPort = process.env.CONDUCTOR_PORT;
+const PINNED_PORT = argPort ? null : conductorPort ? Number(conductorPort) : null;
 const START_PORT = Number(argPort ?? process.env.START_PORT ?? 3000);
 const MAX_TRIES = 50;
 
-if (!Number.isInteger(START_PORT) || START_PORT < 1 || START_PORT > 65535) {
-  console.error(`Invalid start port: ${START_PORT}`);
+const portToValidate = PINNED_PORT ?? START_PORT;
+if (!Number.isInteger(portToValidate) || portToValidate < 1 || portToValidate > 65535) {
+  console.error(`Invalid port: ${portToValidate}`);
   process.exit(1);
 }
 
@@ -52,7 +58,17 @@ async function findPort() {
   );
 }
 
-const port = await findPort();
+async function resolvePort() {
+  if (PINNED_PORT !== null) {
+    if (await isFree(PINNED_PORT)) return PINNED_PORT;
+    throw new Error(
+      `CONDUCTOR_PORT=${PINNED_PORT} is already in use. Stop whatever is holding it (lsof -nP -iTCP:${PINNED_PORT} -sTCP:LISTEN) — refusing to drift to another port because Conductor's preview URL is pinned to ${PINNED_PORT}.`,
+    );
+  }
+  return findPort();
+}
+
+const port = await resolvePort();
 const url = `http://localhost:${port}`;
 
 console.log("");
