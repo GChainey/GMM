@@ -6,6 +6,7 @@ import { Sparkles, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { markOutcomeShippedAction } from "@/app/(app)/groups/[slug]/pledge/actions";
+import { useSounds } from "@/hooks/use-sounds";
 import { cn } from "@/lib/utils";
 
 interface OutcomeBlockProps {
@@ -24,6 +25,7 @@ export function OutcomeBlock({
   variant = "card",
 }: OutcomeBlockProps) {
   const [isPending, startTransition] = useTransition();
+  const playSound = useSounds();
   const shipped = Boolean(achievedAt);
   const trimmed = outcomeText.trim();
 
@@ -31,6 +33,7 @@ export function OutcomeBlock({
     startTransition(async () => {
       try {
         await markOutcomeShippedAction({ slug, shipped: !shipped });
+        if (!shipped) playSound("outcomeShipped");
         toast.success(
           shipped ? "Outcome unmarked." : "Outcome shipped — kudos.",
         );

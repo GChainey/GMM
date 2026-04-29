@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
 import { savePledgeAction } from "@/app/(app)/groups/[slug]/pledge/actions";
 import { toast } from "sonner";
+import { useSounds } from "@/hooks/use-sounds";
 import { cn } from "@/lib/utils";
 
 type ActivityKind = "do" | "abstain" | "monthly_total";
@@ -79,6 +80,7 @@ export function PledgeForm({
       : [{ label: "", description: "", kind: "do", targetAmount: "", unit: "" }];
   const [acts, setActs] = useState<ActivityDraft[]>(initial);
   const [isPending, startTransition] = useTransition();
+  const playSound = useSounds();
 
   const initialRewardChoice =
     defaultRewardOptionId &&
@@ -110,10 +112,12 @@ export function PledgeForm({
       ...curr,
       { label: "", description: "", kind: "do", targetAmount: "", unit: "" },
     ]);
+    playSound("riteAdded");
   }
 
   function remove(i: number) {
     setActs((curr) => (curr.length === 1 ? curr : curr.filter((_, idx) => idx !== i)));
+    if (acts.length > 1) playSound("riteRemoved");
   }
 
   function onSubmit(formData: FormData) {
@@ -172,6 +176,7 @@ export function PledgeForm({
       punishmentChoice === CUSTOM_VALUE ? "" : punishmentChoice,
     );
     formData.set("activitiesJson", JSON.stringify(cleaned));
+    playSound("pledgeInscribed");
     startTransition(async () => {
       try {
         await savePledgeAction(formData);

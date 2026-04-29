@@ -3,6 +3,7 @@ import { Cinzel, Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { SoundProvider } from "@/components/sound-provider";
 import "./globals.css";
 
 const display = Cinzel({
@@ -31,7 +32,9 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={`${display.variable} ${body.variable} h-full`}>
         <body className="min-h-full flex flex-col">
-          <TooltipProvider delay={150}>{children}</TooltipProvider>
+          <SoundProvider>
+            <TooltipProvider delay={150}>{children}</TooltipProvider>
+          </SoundProvider>
           <Toaster richColors closeButton position="top-center" />
         </body>
       </html>
