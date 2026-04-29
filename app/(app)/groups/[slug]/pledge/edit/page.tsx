@@ -86,7 +86,6 @@ export default async function EditPledgePage({ params }: EditPledgePageProps) {
         defaultPunishmentOptionId={pledge.punishmentOptionId}
         defaultRewardText={pledge.rewardText}
         defaultPunishmentText={pledge.punishmentText}
-        defaultOutcomeText={pledge.outcomeText}
         defaultActivities={acts.map((a) => ({
           id: a.id,
           label: a.label,
@@ -95,6 +94,7 @@ export default async function EditPledgePage({ params }: EditPledgePageProps) {
           targetAmount:
             a.targetAmount != null ? String(a.targetAmount) : "",
           unit: a.unit ?? "",
+          outcomeText: a.outcomeText ?? "",
         }))}
         rewardOptions={rewardOptions}
         punishmentOptions={punishmentOptions}
