@@ -7,7 +7,10 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks/(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
+// Renamed from `middleware.ts` (Edge runtime, deprecated in Next 16) to
+// `proxy.ts` (Node.js runtime). Clerk pulls in Node-only modules
+// (#crypto, etc.) so the Node runtime is required.
+export const proxy = clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
     await auth.protect();
   }
