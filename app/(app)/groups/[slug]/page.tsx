@@ -176,6 +176,12 @@ export default async function PantheonPage({ params }: PageProps) {
                       name={user.displayName}
                       src={user.avatarUrl}
                       size={48}
+                      customization={{
+                        faceStyle: user.faceStyle,
+                        faceColor: user.faceColor,
+                        faceGaze: user.faceGaze,
+                        faceDepth: user.faceDepth,
+                      }}
                     />
                     <div>
                       <p className="font-display text-2xl tracking-tight">

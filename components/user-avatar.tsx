@@ -7,15 +7,11 @@ import {
 } from "facehash";
 
 import { cn } from "@/lib/utils";
-
-const FACEHASH_COLOR_CLASSES = [
-  "bg-amber-500 dark:bg-amber-600",
-  "bg-rose-500 dark:bg-rose-600",
-  "bg-violet-500 dark:bg-violet-600",
-  "bg-sky-500 dark:bg-sky-600",
-  "bg-emerald-500 dark:bg-emerald-600",
-  "bg-fuchsia-500 dark:bg-fuchsia-600",
-];
+import { FaceDisplay } from "@/components/face-display";
+import {
+  resolveFace,
+  type FaceCustomization,
+} from "@/lib/face-config";
 
 interface UserAvatarProps {
   name: string;
@@ -23,6 +19,7 @@ interface UserAvatarProps {
   size?: number;
   className?: string;
   ringClassName?: string;
+  customization?: Partial<FaceCustomization>;
 }
 
 export function UserAvatar({
@@ -31,7 +28,17 @@ export function UserAvatar({
   size = 40,
   className,
   ringClassName = "ring-2 ring-gold/40",
+  customization,
 }: UserAvatarProps) {
+  const safeName = name || "?";
+  const face = resolveFace(safeName, {
+    faceStyle: customization?.faceStyle ?? null,
+    faceColor: customization?.faceColor ?? null,
+    faceGaze: customization?.faceGaze ?? null,
+    faceDepth: customization?.faceDepth ?? null,
+  });
+  const initial = safeName.charAt(0).toUpperCase();
+
   return (
     <FaceAvatar
       className={cn(
@@ -41,15 +48,15 @@ export function UserAvatar({
       )}
       style={{ width: size, height: size }}
     >
-      <FaceAvatarImage src={src ?? undefined} alt={name} />
-      <FaceAvatarFallback
-        name={name || "?"}
-        facehashProps={{
-          colorClasses: FACEHASH_COLOR_CLASSES,
-          intensity3d: "subtle",
-          enableBlink: true,
-        }}
-      />
+      <FaceAvatarImage src={src ?? undefined} alt={safeName} />
+      <FaceAvatarFallback name={safeName}>
+        <FaceDisplay
+          face={face}
+          initial={initial}
+          enableBlink
+          className="h-full w-full rounded-full"
+        />
+      </FaceAvatarFallback>
     </FaceAvatar>
   );
 }
