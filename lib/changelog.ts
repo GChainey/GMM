@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-04-29",
+    title: "Cloister narrows to icons",
+    items: [
+      "Sidebar now collapses to a slender column of sigils — press ⌘B and the names retreat, leaving only the icons of Altar, Daily Rite, Pantheons, Visage, and Codex. A pyramid stands watch where the brand once read.",
+      "Hovering an icon while collapsed surfaces its title in a small tooltip, so no rite is lost to brevity.",
+    ],
+  },
+  {
+    date: "2026-04-29",
     title: "Toward a month's-end ship",
     items: [
       "Pledges gain an Outcome — the deliverable thou wilt show the pantheon on May 31. A recital, a release, an exhibition, a demo. Daily rites lead somewhere now.",

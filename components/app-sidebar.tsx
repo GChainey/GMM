@@ -8,6 +8,7 @@ import {
   UsersIcon,
   CircleUserRoundIcon,
   ScrollTextIcon,
+  PyramidIcon,
 } from "lucide-react"
 
 import { NavMain, type NavMainItem } from "@/components/nav-main"
@@ -37,14 +38,19 @@ interface AppSidebarProps
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
+              size="lg"
               className="data-[slot=sidebar-menu-button]:p-1.5!"
+              tooltip="God Mode May"
               render={<Link href="/dashboard" />}
             >
+              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                <PyramidIcon className="size-4" />
+              </div>
               <span className="font-display text-base tracking-[0.3em]">
                 G·M·M
               </span>
