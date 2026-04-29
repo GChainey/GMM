@@ -22,14 +22,12 @@ import {
   todayIsoInTz,
 } from "@/lib/dates";
 import {
-  DEMO_GROUP_NAME,
   DEMO_GROUP_SLUG,
   DEMO_MEMBERS,
   DEMO_USER_PREFIX,
   isDemoMode,
 } from "@/lib/demo";
-import { createInviteToken } from "@/lib/id";
-import { DEFAULT_PRESET, PRESETS, seedSlugsToIds } from "@/lib/pledge-options";
+import { seedDemoPantheonCore, wipeDemoPantheon } from "@/lib/demo-seed";
 
 function assertDemoMode() {
   if (!isDemoMode()) {
@@ -244,20 +242,6 @@ export async function runDemoTodayAction() {
 
 // ---------- Seed / reset ----------
 
-async function wipeDemoPantheon() {
-  const [existing] = await db
-    .select()
-    .from(groups)
-    .where(eq(groups.slug, DEMO_GROUP_SLUG))
-    .limit(1);
-  if (existing) {
-    // Cascading FKs handle memberships, pledges, activities, checkins.
-    await db.delete(groups).where(eq(groups.id, existing.id));
-  }
-  // Also remove the synthetic demo users (any orphaned checkins/journal cascade).
-  await db.delete(users).where(like(users.id, `${DEMO_USER_PREFIX}%`));
-}
-
 export async function resetDemoPantheonAction() {
   assertDemoMode();
   await wipeDemoPantheon();
@@ -268,136 +252,7 @@ export async function seedDemoPantheonAction() {
   assertDemoMode();
   const founderId = await requireUserId();
   await ensureUserRow();
-
-  await wipeDemoPantheon();
-
-  // Insert demo users (varied avatars).
-  for (const m of DEMO_MEMBERS) {
-    await db.insert(users).values({
-      id: m.id,
-      displayName: m.displayName,
-      avatarUrl: null,
-      timezone: "UTC",
-      faceStyle: m.faceStyle,
-      faceColor: m.faceColor,
-      faceGaze: m.faceGaze,
-      faceDepth: m.faceDepth,
-    });
-  }
-
-  // Create the demo pantheon owned by the current user.
-  const preset = PRESETS[DEFAULT_PRESET];
-  const [group] = await db
-    .insert(groups)
-    .values({
-      slug: DEMO_GROUP_SLUG,
-      name: DEMO_GROUP_NAME,
-      description:
-        "A demo pantheon for play. Press ⌘K to travel through time and toggle outcomes.",
-      isPublic: true,
-      strikeLimit: 5,
-      inviteToken: createInviteToken(),
-      ownerId: founderId,
-      allowedRewardOptionIds: seedSlugsToIds(preset.rewardSlugs),
-      allowedPunishmentOptionIds: seedSlugsToIds(preset.punishmentSlugs),
-      allowCustomReward: preset.allowCustomReward,
-      allowCustomPunishment: preset.allowCustomPunishment,
-    })
-    .returning();
-
-  // Founder + members.
-  await db.insert(groupMemberships).values({
-    groupId: group.id,
-    userId: founderId,
-    role: "owner",
-  });
-  for (const m of DEMO_MEMBERS) {
-    await db.insert(groupMemberships).values({
-      groupId: group.id,
-      userId: m.id,
-      role: "member",
-    });
-  }
-
-  // Pledges, activities, and back-filled checkins for each demo member.
-  // Default seed up to May 15 — adjustable later via the time controls.
-  const today = await resolveToday("UTC");
-  const seedThrough =
-    today >= challengeStartIso() && today <= challengeEndIso()
-      ? today
-      : "2026-05-15";
-
-  for (const m of DEMO_MEMBERS) {
-    const [pledge] = await db
-      .insert(pledges)
-      .values({
-        userId: m.id,
-        groupId: group.id,
-        pledgeText: m.pledgeText,
-        rewardText: m.rewardText,
-        punishmentText: m.punishmentText,
-      })
-      .returning();
-
-    const insertedActivities: { id: string; seedLabel: string; kind: string; dailyAmount: number | null; targetAmount: number | null }[] = [];
-    for (const [idx, a] of m.activities.entries()) {
-      const [created] = await db
-        .insert(activities)
-        .values({
-          pledgeId: pledge.id,
-          label: a.label,
-          description: a.description,
-          sortOrder: idx,
-          kind: a.kind,
-          targetAmount: a.targetAmount,
-          unit: a.unit,
-          // Bind the deliverable to the first rite of each pledge — same
-          // shape as the 0005 migration's backfill.
-          outcomeText: idx === 0 ? m.outcomeText : "",
-        })
-        .returning({ id: activities.id });
-      insertedActivities.push({
-        id: created.id,
-        seedLabel: a.label,
-        kind: a.kind,
-        dailyAmount: a.dailyAmount ?? null,
-        targetAmount: a.targetAmount,
-      });
-    }
-
-    // Back-fill checkins from challenge start through seedThrough.
-    let cursor = challengeStartIso();
-    while (cursor <= seedThrough) {
-      for (const a of insertedActivities) {
-        const r = pseudoRandom(`${m.id}::${a.id}::${cursor}`);
-        const completed = r < m.completionRate;
-        if (!completed) continue;
-        const amount =
-          a.kind === "monthly_total"
-            ? a.dailyAmount ??
-              Math.max(1, Math.round((a.targetAmount ?? 0) / 31))
-            : null;
-        await db.insert(dailyCheckins).values({
-          userId: m.id,
-          activityId: a.id,
-          date: cursor,
-          completed: true,
-          amount,
-        });
-      }
-      cursor = addDays(cursor, 1);
-    }
-  }
-
-  // Park the demo clock at seedThrough so the UI shows midway state out of the box.
-  const store = await cookies();
-  store.set(DEMO_DATE_COOKIE, seedThrough, {
-    path: "/",
-    httpOnly: false,
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30,
-  });
-
+  await seedDemoPantheonCore(founderId);
   revalidateDemo();
   return { slug: DEMO_GROUP_SLUG };
 }

@@ -1,6 +1,7 @@
 // Date helpers anchored on May 2026 in user's timezone.
 
 import { cookies } from "next/headers";
+import { DEMO_DEFAULT_TODAY, isDemoMode } from "./demo";
 
 export const CHALLENGE_YEAR = 2026;
 export const CHALLENGE_MONTH = 5; // May (1-indexed)
@@ -8,10 +9,6 @@ export const CHALLENGE_MONTH = 5; // May (1-indexed)
 const TIMEZONE_FALLBACK = "UTC";
 
 export const DEMO_DATE_COOKIE = "gmm_demo_date";
-
-function isDemoMode(): boolean {
-  return process.env.NEXT_PUBLIC_DEMO_MODE === "1";
-}
 
 export function todayIsoInTz(timezone: string | null | undefined): string {
   const tz = timezone ?? TIMEZONE_FALLBACK;
@@ -38,7 +35,14 @@ export async function resolveToday(
 ): Promise<string> {
   const demo = await getDemoToday();
   if (demo) return demo;
-  return todayIsoInTz(timezone);
+  const real = todayIsoInTz(timezone);
+  // In demo mode, when wall-clock is outside the challenge window (i.e. now,
+  // and forever after May 2026), park at a sensible midway date so seeded
+  // data is visible immediately and the lock follows the demo clock.
+  if (isDemoMode() && (real < challengeStartIso() || real > challengeEndIso())) {
+    return DEMO_DEFAULT_TODAY;
+  }
+  return real;
 }
 
 export function challengeStartIso(): string {

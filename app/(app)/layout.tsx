@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { ensureUserRow } from "@/lib/auth";
 import { isDemoMode } from "@/lib/demo";
+import { demoPantheonExists, seedDemoPantheonCore } from "@/lib/demo-seed";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { DemoDrawer } from "@/components/demo-drawer";
@@ -16,6 +17,12 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const row = await ensureUserRow();
+
+  // Auto-seed the Demo Council on first authenticated load when demo mode is on
+  // and it doesn't exist yet. The drawer's Wipe button is the escape hatch.
+  if (row && isDemoMode() && !(await demoPantheonExists())) {
+    await seedDemoPantheonCore(row.id);
+  }
 
   let navUser = {
     name: row?.displayName ?? "Mortal",
