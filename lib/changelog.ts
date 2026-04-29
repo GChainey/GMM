@@ -12,6 +12,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "`npm run dev` is now the whole demo. Demo mode is auto-on outside production, and the Demo Council founds itself on thy first sign-in — no env flag, no seed button.",
       "The clock parks at May 15 by default when wall-time is outside the challenge window, so the seeded mortals already have a fortnight of strikes and streaks the moment thou dost arrive at the altar.",
       "Set NEXT_PUBLIC_DEMO_MODE=0 to dismiss the drawer when thou wouldst test the bare app; the Wipe button still empties the council on demand.",
+      "Quietly: `npm run dev` now runs migrations before starting the server, so a freshly pulled branch is one command from altar to ⌘K. `dev:no-migrate` skips it for offline work.",
     ],
   },
   {
