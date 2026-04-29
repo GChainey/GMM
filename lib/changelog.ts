@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-04-29",
+    title: "Cloister narrows to icons",
+    items: [
+      "Sidebar now collapses to a slender column of sigils — press ⌘B and the names retreat, leaving only the icons of Altar, Daily Rite, Pantheons, Visage, and Codex. A pyramid stands watch where the brand once read.",
+      "Hovering an icon while collapsed surfaces its title in a small tooltip, so no rite is lost to brevity.",
+    ],
+  },
+  {
+    date: "2026-04-29",
     title: "Marble sidebar, mutable visage",
     items: [
       "New monastery sidebar — Altar, Daily Rite, Pantheons, Visage, Codex — with active-state highlighting and ⌘B to collapse.",
