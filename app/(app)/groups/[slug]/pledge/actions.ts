@@ -2,10 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq, notInArray } from "drizzle-orm";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { activities, groupMemberships, groups, pledges } from "@/db/schema";
+import {
+  activities,
+  groupMemberships,
+  groups,
+  pledgeOptions,
+  pledges,
+} from "@/db/schema";
 import { ensureUserRow, requireUserId } from "@/lib/auth";
 import { isLocked } from "@/lib/dates";
 
@@ -26,6 +32,8 @@ const activitySchema = z
 const pledgeSchema = z.object({
   slug: z.string(),
   pledgeText: z.string().max(4000).default(""),
+  rewardOptionId: z.string().nullable().default(null),
+  punishmentOptionId: z.string().nullable().default(null),
   rewardText: z.string().max(1000).default(""),
   punishmentText: z.string().max(1000).default(""),
   outcomeText: z.string().max(1000).default(""),
@@ -44,9 +52,20 @@ export async function savePledgeAction(formData: FormData) {
     parsedActivities = [];
   }
 
+  const rawRewardOption = formData.get("rewardOptionId");
+  const rawPunishmentOption = formData.get("punishmentOptionId");
+
   const data = pledgeSchema.parse({
     slug: String(formData.get("slug") ?? ""),
     pledgeText: String(formData.get("pledgeText") ?? ""),
+    rewardOptionId:
+      rawRewardOption && String(rawRewardOption) !== ""
+        ? String(rawRewardOption)
+        : null,
+    punishmentOptionId:
+      rawPunishmentOption && String(rawPunishmentOption) !== ""
+        ? String(rawPunishmentOption)
+        : null,
     rewardText: String(formData.get("rewardText") ?? ""),
     punishmentText: String(formData.get("punishmentText") ?? ""),
     outcomeText: String(formData.get("outcomeText") ?? ""),
@@ -84,6 +103,53 @@ export async function savePledgeAction(formData: FormData) {
     );
   }
 
+  const validateOption = async (
+    optionId: string,
+    type: "reward" | "punishment",
+    allowed: string[],
+  ) => {
+    if (!allowed.includes(optionId)) {
+      throw new Error("That option is not permitted in this pantheon.");
+    }
+    const [opt] = await db
+      .select({ id: pledgeOptions.id })
+      .from(pledgeOptions)
+      .where(
+        and(
+          eq(pledgeOptions.id, optionId),
+          eq(pledgeOptions.type, type),
+          inArray(
+            pledgeOptions.id,
+            allowed.length > 0 ? allowed : ["__never__"],
+          ),
+        ),
+      )
+      .limit(1);
+    if (!opt) {
+      throw new Error("That option is no longer available.");
+    }
+  };
+
+  if (data.rewardOptionId) {
+    await validateOption(
+      data.rewardOptionId,
+      "reward",
+      group.allowedRewardOptionIds,
+    );
+  } else if (!group.allowCustomReward) {
+    throw new Error("Pick a reward from the pantheon's list.");
+  }
+
+  if (data.punishmentOptionId) {
+    await validateOption(
+      data.punishmentOptionId,
+      "punishment",
+      group.allowedPunishmentOptionIds,
+    );
+  } else if (!group.allowCustomPunishment) {
+    throw new Error("Pick a punishment from the pantheon's list.");
+  }
+
   let [pledge] = await db
     .select()
     .from(pledges)
@@ -99,6 +165,8 @@ export async function savePledgeAction(formData: FormData) {
         pledgeText: data.pledgeText,
         rewardText: data.rewardText,
         punishmentText: data.punishmentText,
+        rewardOptionId: data.rewardOptionId,
+        punishmentOptionId: data.punishmentOptionId,
         outcomeText: data.outcomeText,
       })
       .returning();
@@ -109,6 +177,8 @@ export async function savePledgeAction(formData: FormData) {
         pledgeText: data.pledgeText,
         rewardText: data.rewardText,
         punishmentText: data.punishmentText,
+        rewardOptionId: data.rewardOptionId,
+        punishmentOptionId: data.punishmentOptionId,
         outcomeText: data.outcomeText,
         updatedAt: new Date(),
       })

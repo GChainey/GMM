@@ -22,13 +22,27 @@ interface ActivityDraft {
   unit: string;
 }
 
+export interface PledgeOptionLite {
+  id: string;
+  label: string;
+  description: string;
+  intensity: "mild" | "standard" | "hardcore";
+  isSensitive: boolean;
+}
+
 interface PledgeFormProps {
   slug: string;
   defaultPledgeText: string;
+  defaultRewardOptionId: string | null;
+  defaultPunishmentOptionId: string | null;
   defaultRewardText: string;
   defaultPunishmentText: string;
   defaultOutcomeText: string;
   defaultActivities: ActivityDraft[];
+  rewardOptions: PledgeOptionLite[];
+  punishmentOptions: PledgeOptionLite[];
+  allowCustomReward: boolean;
+  allowCustomPunishment: boolean;
 }
 
 const KIND_LABEL: Record<ActivityKind, string> = {
@@ -43,13 +57,21 @@ const KIND_TONE: Record<ActivityKind, string> = {
   monthly_total: "border-gold/50 bg-gold/5",
 };
 
+const CUSTOM_VALUE = "__custom__";
+
 export function PledgeForm({
   slug,
   defaultPledgeText,
+  defaultRewardOptionId,
+  defaultPunishmentOptionId,
   defaultRewardText,
   defaultPunishmentText,
   defaultOutcomeText,
   defaultActivities,
+  rewardOptions,
+  punishmentOptions,
+  allowCustomReward,
+  allowCustomPunishment,
 }: PledgeFormProps) {
   const initial: ActivityDraft[] =
     defaultActivities.length > 0
@@ -57,6 +79,27 @@ export function PledgeForm({
       : [{ label: "", description: "", kind: "do", targetAmount: "", unit: "" }];
   const [acts, setActs] = useState<ActivityDraft[]>(initial);
   const [isPending, startTransition] = useTransition();
+
+  const initialRewardChoice =
+    defaultRewardOptionId &&
+    rewardOptions.some((o) => o.id === defaultRewardOptionId)
+      ? defaultRewardOptionId
+      : allowCustomReward && defaultRewardText
+        ? CUSTOM_VALUE
+        : rewardOptions[0]?.id ?? (allowCustomReward ? CUSTOM_VALUE : "");
+  const initialPunishmentChoice =
+    defaultPunishmentOptionId &&
+    punishmentOptions.some((o) => o.id === defaultPunishmentOptionId)
+      ? defaultPunishmentOptionId
+      : allowCustomPunishment && defaultPunishmentText
+        ? CUSTOM_VALUE
+        : punishmentOptions[0]?.id ??
+          (allowCustomPunishment ? CUSTOM_VALUE : "");
+
+  const [rewardChoice, setRewardChoice] = useState<string>(initialRewardChoice);
+  const [punishmentChoice, setPunishmentChoice] = useState<string>(
+    initialPunishmentChoice,
+  );
 
   function update(i: number, patch: Partial<ActivityDraft>) {
     setActs((curr) => curr.map((a, idx) => (idx === i ? { ...a, ...patch } : a)));
@@ -110,6 +153,24 @@ export function PledgeForm({
       toast.error("Add at least one rite or tally.");
       return;
     }
+
+    if (!rewardChoice) {
+      toast.error("Pick a reward.");
+      return;
+    }
+    if (!punishmentChoice) {
+      toast.error("Pick a punishment.");
+      return;
+    }
+
+    formData.set(
+      "rewardOptionId",
+      rewardChoice === CUSTOM_VALUE ? "" : rewardChoice,
+    );
+    formData.set(
+      "punishmentOptionId",
+      punishmentChoice === CUSTOM_VALUE ? "" : punishmentChoice,
+    );
     formData.set("activitiesJson", JSON.stringify(cleaned));
     startTransition(async () => {
       try {
@@ -121,6 +182,11 @@ export function PledgeForm({
       }
     });
   }
+
+  const rewardSelected = rewardOptions.find((o) => o.id === rewardChoice);
+  const punishmentSelected = punishmentOptions.find(
+    (o) => o.id === punishmentChoice,
+  );
 
   return (
     <form action={onSubmit} className="flex flex-col gap-6">
@@ -161,28 +227,30 @@ export function PledgeForm({
             />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label htmlFor="rewardText">Reward</Label>
-              <Textarea
-                id="rewardText"
-                name="rewardText"
-                rows={3}
-                defaultValue={defaultRewardText}
-                placeholder="What awaits thee upon ascension?"
-                maxLength={1000}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="punishmentText">Punishment</Label>
-              <Textarea
-                id="punishmentText"
-                name="punishmentText"
-                rows={3}
-                defaultValue={defaultPunishmentText}
-                placeholder="What shall befall thee should thou fall?"
-                maxLength={1000}
-              />
-            </div>
+            <OptionPicker
+              kind="reward"
+              label="Reward"
+              placeholder="What awaits thee upon ascension?"
+              options={rewardOptions}
+              allowCustom={allowCustomReward}
+              value={rewardChoice}
+              onChange={setRewardChoice}
+              detailName="rewardText"
+              defaultDetail={defaultRewardText}
+              selected={rewardSelected}
+            />
+            <OptionPicker
+              kind="punishment"
+              label="Punishment"
+              placeholder="What shall befall thee should thou fall?"
+              options={punishmentOptions}
+              allowCustom={allowCustomPunishment}
+              value={punishmentChoice}
+              onChange={setPunishmentChoice}
+              detailName="punishmentText"
+              defaultDetail={defaultPunishmentText}
+              selected={punishmentSelected}
+            />
           </div>
         </CardContent>
       </Card>
@@ -319,5 +387,80 @@ export function PledgeForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+function OptionPicker({
+  kind,
+  label,
+  placeholder,
+  options,
+  allowCustom,
+  value,
+  onChange,
+  detailName,
+  defaultDetail,
+  selected,
+}: {
+  kind: "reward" | "punishment";
+  label: string;
+  placeholder: string;
+  options: PledgeOptionLite[];
+  allowCustom: boolean;
+  value: string;
+  onChange: (v: string) => void;
+  detailName: string;
+  defaultDetail: string;
+  selected?: PledgeOptionLite;
+}) {
+  const isCustom = value === CUSTOM_VALUE;
+  const noOptions = options.length === 0 && !allowCustom;
+
+  return (
+    <div className="grid gap-2">
+      <Label>{label}</Label>
+      {noOptions ? (
+        <p className="rounded-md border border-dashed border-border/60 p-3 text-xs text-muted-foreground">
+          The founder hath set no {kind} options. Ask them to amend the rite.
+        </p>
+      ) : (
+        <>
+          <select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            aria-label={`${label} kind`}
+          >
+            {options.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+                {o.intensity === "hardcore" ? " (hardcore)" : ""}
+                {o.isSensitive ? " ✦" : ""}
+              </option>
+            ))}
+            {allowCustom && (
+              <option value={CUSTOM_VALUE}>Custom — write thine own…</option>
+            )}
+          </select>
+          {selected && !isCustom && selected.description && (
+            <p className="text-xs italic text-muted-foreground">
+              {selected.description}
+            </p>
+          )}
+          <Textarea
+            id={detailName}
+            name={detailName}
+            rows={3}
+            defaultValue={defaultDetail}
+            placeholder={
+              isCustom
+                ? placeholder
+                : "Specifics — the charity, the sum, the deed…"
+            }
+            maxLength={1000}
+          />
+        </>
+      )}
+    </div>
   );
 }
