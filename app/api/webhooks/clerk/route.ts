@@ -31,14 +31,13 @@ export async function POST(req: NextRequest) {
       .values({
         id: data.id,
         displayName,
-        avatarUrl: data.image_url ?? null,
+        avatarUrl: null,
         timezone: "UTC",
       })
       .onConflictDoUpdate({
         target: users.id,
         set: {
           displayName,
-          avatarUrl: data.image_url ?? null,
         },
       });
   }

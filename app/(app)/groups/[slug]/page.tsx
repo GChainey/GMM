@@ -17,11 +17,7 @@ import { StatusGlyph } from "@/components/status-glyph";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
 import { Settings } from "lucide-react";
 
 interface PageProps {
@@ -153,18 +149,20 @@ export default async function PantheonPage({ params }: PageProps) {
               activityId: c.activityId,
               date: typeof c.date === "string" ? c.date : String(c.date),
               completed: c.completed,
+              amount: c.amount,
             }));
+          const actLite = acts.map((a) => ({
+            id: a.id,
+            kind: (a.kind as "do" | "abstain" | "monthly_total") ?? "do",
+            targetAmount: a.targetAmount,
+          }));
           const status = computeStatus({
-            activityIds: acts.map((a) => a.id),
+            activities: actLite,
             checkins: checks,
             strikeLimit: group.strikeLimit,
             timezone: user.timezone ?? "UTC",
           });
-          const cells = buildCells(
-            acts.map((a) => a.id),
-            checks,
-            user.timezone ?? "UTC",
-          );
+          const cells = buildCells(actLite, checks, user.timezone ?? "UTC");
 
           return (
             <Card
@@ -174,14 +172,11 @@ export default async function PantheonPage({ params }: PageProps) {
               <CardContent className="flex flex-col gap-4 p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12 ring-2 ring-gold/40">
-                      {user.avatarUrl && (
-                        <AvatarImage src={user.avatarUrl} alt={user.displayName} />
-                      )}
-                      <AvatarFallback className="font-display">
-                        {user.displayName.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      name={user.displayName}
+                      src={user.avatarUrl}
+                      size={48}
+                    />
                     <div>
                       <p className="font-display text-2xl tracking-tight">
                         {user.displayName}
@@ -217,44 +212,103 @@ export default async function PantheonPage({ params }: PageProps) {
                 )}
 
                 {acts.length > 0 && (
-                  <div className="mt-2">
-                    <p className="mb-2 font-display text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                      Daily rites — May
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {acts.map((a) => (
-                        <Badge
-                          key={a.id}
-                          variant="outline"
-                          className="font-normal"
-                        >
-                          {a.label}
-                        </Badge>
-                      ))}
+                  <div className="mt-2 flex flex-col gap-3">
+                    <div>
+                      <p className="mb-2 font-display text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                        Rites & tallies — May
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {acts.map((a) => {
+                          const kind = a.kind ?? "do";
+                          const tone =
+                            kind === "abstain"
+                              ? "border-fallen/50 bg-fallen/10 text-fallen"
+                              : kind === "monthly_total"
+                                ? "border-gold/60 bg-gold/10 text-gold-foreground"
+                                : "border-divine/40 bg-divine/10";
+                          return (
+                            <Badge
+                              key={a.id}
+                              variant="outline"
+                              className={`font-normal ${tone}`}
+                            >
+                              {kind === "abstain" && "✗ "}
+                              {kind === "monthly_total" && "Σ "}
+                              {a.label}
+                              {kind === "monthly_total" && a.targetAmount && (
+                                <span className="ml-1 opacity-70">
+                                  /{a.targetAmount}
+                                  {a.unit ? ` ${a.unit}` : ""}
+                                </span>
+                              )}
+                            </Badge>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="mt-3 grid grid-cols-[repeat(31,minmax(0,1fr))] gap-1">
-                      {dates.map((d) => {
-                        const cell = cells.get(d);
-                        const day = Number(d.slice(8));
-                        const tone =
-                          cell?.state === "done"
-                            ? "bg-gold/80 text-gold-foreground"
-                            : cell?.state === "missed"
-                              ? "bg-fallen/80 text-primary-foreground"
-                              : cell?.state === "pending"
-                                ? "bg-divine/30 text-foreground"
-                                : "bg-muted text-muted-foreground/60";
-                        return (
-                          <div
-                            key={d}
-                            title={`${d} — ${cell?.state ?? "future"}`}
-                            className={`flex aspect-square items-center justify-center rounded-sm border border-border/40 text-[0.65rem] font-medium ${tone}`}
-                          >
-                            {day}
-                          </div>
-                        );
-                      })}
-                    </div>
+
+                    {status.monthlyProgress.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        {status.monthlyProgress.map((mp) => {
+                          const a = acts.find((x) => x.id === mp.activityId);
+                          if (!a) return null;
+                          return (
+                            <div
+                              key={mp.activityId}
+                              className="rounded-md border border-gold/40 bg-gold/5 p-3"
+                            >
+                              <div className="flex items-baseline justify-between gap-3">
+                                <p className="font-display text-sm tracking-tight">
+                                  {a.label}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {mp.total}
+                                  {a.unit ? ` ${a.unit}` : ""} /{" "}
+                                  {mp.target}
+                                  {a.unit ? ` ${a.unit}` : ""}
+                                </p>
+                              </div>
+                              <div className="mt-2 h-2 overflow-hidden rounded-full bg-border/60">
+                                <div
+                                  className={`h-full rounded-full transition-[width] ${mp.reached ? "bg-ascended" : "bg-gold"}`}
+                                  style={{
+                                    width: `${(mp.ratio * 100).toFixed(1)}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {acts.some(
+                      (a) => a.kind === "do" || a.kind === "abstain",
+                    ) && (
+                      <div className="grid grid-cols-[repeat(31,minmax(0,1fr))] gap-1">
+                        {dates.map((d) => {
+                          const cell = cells.get(d);
+                          const day = Number(d.slice(8));
+                          const tone =
+                            cell?.state === "done"
+                              ? "bg-gold/80 text-gold-foreground"
+                              : cell?.state === "missed"
+                                ? "bg-fallen/80 text-primary-foreground"
+                                : cell?.state === "pending"
+                                  ? "bg-divine/30 text-foreground"
+                                  : "bg-muted text-muted-foreground/60";
+                          return (
+                            <div
+                              key={d}
+                              title={`${d} — ${cell?.state ?? "future"}`}
+                              className={`flex aspect-square items-center justify-center rounded-sm border border-border/40 text-[0.65rem] font-medium ${tone}`}
+                            >
+                              {day}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>

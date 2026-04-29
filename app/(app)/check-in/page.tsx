@@ -6,6 +6,7 @@ import {
   dailyCheckins,
   groupMemberships,
   groups,
+  journalEntries,
   pledges,
 } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
@@ -18,6 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckinRow } from "@/components/checkin-row";
+import { JournalEntry } from "@/components/journal-entry";
 
 export default async function CheckInPage() {
   const userId = await requireUserId();
@@ -54,7 +56,9 @@ export default async function CheckInPage() {
         .orderBy(asc(activities.sortOrder))
     : [];
 
-  const todaysCheckins = userActivities.length
+  const activityIds = userActivities.map((a) => a.id);
+
+  const todaysCheckins = activityIds.length
     ? await db
         .select()
         .from(dailyCheckins)
@@ -70,10 +74,46 @@ export default async function CheckInPage() {
     todaysCheckins.map((c) => [c.activityId, c]),
   );
 
+  const monthlyActivityIds = userActivities
+    .filter((a) => a.kind === "monthly_total")
+    .map((a) => a.id);
+
+  const monthlyCheckins = monthlyActivityIds.length
+    ? await db
+        .select()
+        .from(dailyCheckins)
+        .where(
+          and(
+            eq(dailyCheckins.userId, userId),
+            inArray(dailyCheckins.activityId, monthlyActivityIds),
+          ),
+        )
+    : [];
+
+  const monthTotalByActivity = new Map<string, number>();
+  for (const c of monthlyCheckins) {
+    if (typeof c.amount === "number") {
+      monthTotalByActivity.set(
+        c.activityId,
+        (monthTotalByActivity.get(c.activityId) ?? 0) + c.amount,
+      );
+    }
+  }
+
+  const [todayJournal] = await db
+    .select()
+    .from(journalEntries)
+    .where(
+      and(
+        eq(journalEntries.userId, userId),
+        eq(journalEntries.date, today),
+      ),
+    )
+    .limit(1);
+
   const groupedByPledge = userPledges.map((p) => ({
     pledge: p,
-    groupName:
-      groupIdToName.get(p.groupId) ?? "—",
+    groupName: groupIdToName.get(p.groupId) ?? "—",
     acts: userActivities.filter((a) => a.pledgeId === p.id),
   }));
 
@@ -133,16 +173,23 @@ export default async function CheckInPage() {
               ) : (
                 acts.map((a) => {
                   const c = checkinByActivity.get(a.id);
+                  const kind =
+                    (a.kind as "do" | "abstain" | "monthly_total") ?? "do";
                   return (
                     <CheckinRow
                       key={a.id}
                       activityId={a.id}
+                      kind={kind}
                       label={a.label}
                       description={a.description}
                       groupName={groupName}
                       date={today}
                       initialCompleted={c?.completed ?? false}
+                      initialAmount={c?.amount ?? null}
                       initialPhotoUrl={c?.photoUrl ?? null}
+                      unit={a.unit}
+                      target={a.targetAmount}
+                      monthTotalSoFar={monthTotalByActivity.get(a.id) ?? 0}
                     />
                   );
                 })
@@ -150,6 +197,10 @@ export default async function CheckInPage() {
             </CardContent>
           </Card>
         ))
+      )}
+
+      {started && !over && groupedByPledge.length > 0 && (
+        <JournalEntry date={today} initialBody={todayJournal?.body ?? ""} />
       )}
     </div>
   );

@@ -9,11 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
 import { savePledgeAction } from "@/app/(app)/groups/[slug]/pledge/actions";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+type ActivityKind = "do" | "abstain" | "monthly_total";
 
 interface ActivityDraft {
   id?: string;
   label: string;
   description: string;
+  kind: ActivityKind;
+  targetAmount: string;
+  unit: string;
 }
 
 interface PledgeFormProps {
@@ -23,6 +29,18 @@ interface PledgeFormProps {
   defaultPunishmentText: string;
   defaultActivities: ActivityDraft[];
 }
+
+const KIND_LABEL: Record<ActivityKind, string> = {
+  do: "Do daily",
+  abstain: "Abstain daily",
+  monthly_total: "Monthly tally",
+};
+
+const KIND_TONE: Record<ActivityKind, string> = {
+  do: "border-divine/40 bg-divine/5",
+  abstain: "border-fallen/40 bg-fallen/5",
+  monthly_total: "border-gold/50 bg-gold/5",
+};
 
 export function PledgeForm({
   slug,
@@ -34,7 +52,7 @@ export function PledgeForm({
   const initial: ActivityDraft[] =
     defaultActivities.length > 0
       ? defaultActivities
-      : [{ label: "", description: "" }];
+      : [{ label: "", description: "", kind: "do", targetAmount: "", unit: "" }];
   const [acts, setActs] = useState<ActivityDraft[]>(initial);
   const [isPending, startTransition] = useTransition();
 
@@ -43,7 +61,10 @@ export function PledgeForm({
   }
 
   function add() {
-    setActs((curr) => [...curr, { label: "", description: "" }]);
+    setActs((curr) => [
+      ...curr,
+      { label: "", description: "", kind: "do", targetAmount: "", unit: "" },
+    ]);
   }
 
   function remove(i: number) {
@@ -51,15 +72,40 @@ export function PledgeForm({
   }
 
   function onSubmit(formData: FormData) {
-    const cleaned = acts
-      .map((a) => ({
+    const cleaned: Array<{
+      id?: string;
+      label: string;
+      description: string;
+      kind: ActivityKind;
+      targetAmount: number | null;
+      unit: string | null;
+    }> = [];
+    for (const a of acts) {
+      const label = a.label.trim();
+      if (!label) continue;
+      const kind: ActivityKind = a.kind;
+      let targetAmount: number | null = null;
+      let unit: string | null = null;
+      if (kind === "monthly_total") {
+        const parsed = Number(a.targetAmount);
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+          toast.error(`"${label}" needs a positive monthly target.`);
+          return;
+        }
+        targetAmount = Math.round(parsed);
+        unit = a.unit.trim() || null;
+      }
+      cleaned.push({
         id: a.id,
-        label: a.label.trim(),
+        label,
         description: a.description.trim(),
-      }))
-      .filter((a) => a.label.length > 0);
+        kind,
+        targetAmount,
+        unit,
+      });
+    }
     if (cleaned.length === 0) {
-      toast.error("Add at least one daily rite.");
+      toast.error("Add at least one rite or tally.");
       return;
     }
     formData.set("activitiesJson", JSON.stringify(cleaned));
@@ -123,35 +169,102 @@ export function PledgeForm({
 
       <Card className="marble-card">
         <CardHeader>
-          <CardTitle className="font-display text-2xl">Daily Rites</CardTitle>
+          <CardTitle className="font-display text-2xl">Rites & Tallies</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Each rite must be performed every day of May. Add as many as thou
-            darest.
+            Three kinds of vow. Pick one for each row.
           </p>
+          <ul className="mt-2 grid gap-1 text-xs text-muted-foreground md:grid-cols-3">
+            <li>
+              <span className="font-display tracking-widest text-foreground">
+                Do daily
+              </span>{" "}
+              — perform every day of May.
+            </li>
+            <li>
+              <span className="font-display tracking-widest text-foreground">
+                Abstain daily
+              </span>{" "}
+              — refrain every day of May.
+            </li>
+            <li>
+              <span className="font-display tracking-widest text-foreground">
+                Monthly tally
+              </span>{" "}
+              — accumulate to a target by month&apos;s end (e.g. 75 km).
+            </li>
+          </ul>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {acts.map((a, i) => (
             <div
               key={a.id ?? `new-${i}`}
-              className="flex items-start gap-2 rounded-md border border-border/60 p-3"
+              className={cn(
+                "flex items-start gap-2 rounded-md border p-3 transition",
+                KIND_TONE[a.kind],
+              )}
             >
               <span className="mt-2 font-display text-sm tracking-widest text-muted-foreground">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <div className="flex flex-1 flex-col gap-2">
-                <Input
-                  value={a.label}
-                  onChange={(e) => update(i, { label: e.target.value })}
-                  placeholder="e.g. Morning gym session"
-                  required
-                  maxLength={120}
-                />
+                <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                  <select
+                    aria-label="Kind"
+                    value={a.kind}
+                    onChange={(e) =>
+                      update(i, { kind: e.target.value as ActivityKind })
+                    }
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm font-display tracking-widest"
+                  >
+                    {(Object.keys(KIND_LABEL) as ActivityKind[]).map((k) => (
+                      <option key={k} value={k}>
+                        {KIND_LABEL[k]}
+                      </option>
+                    ))}
+                  </select>
+                  <Input
+                    value={a.label}
+                    onChange={(e) => update(i, { label: e.target.value })}
+                    placeholder={
+                      a.kind === "abstain"
+                        ? "e.g. No alcohol"
+                        : a.kind === "monthly_total"
+                          ? "e.g. Total kilometres run"
+                          : "e.g. Morning gym session"
+                    }
+                    required
+                    maxLength={120}
+                    className="flex-1"
+                  />
+                </div>
                 <Input
                   value={a.description}
                   onChange={(e) => update(i, { description: e.target.value })}
                   placeholder="Optional detail or boundary"
                   maxLength={500}
                 />
+                {a.kind === "monthly_total" && (
+                  <div className="grid gap-2 md:grid-cols-[1fr_1fr]">
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      step={1}
+                      value={a.targetAmount}
+                      onChange={(e) =>
+                        update(i, { targetAmount: e.target.value })
+                      }
+                      placeholder="Target (e.g. 75)"
+                      required
+                    />
+                    <Input
+                      value={a.unit}
+                      onChange={(e) => update(i, { unit: e.target.value })}
+                      placeholder="Unit (e.g. km, pages, reps)"
+                      maxLength={24}
+                    />
+                  </div>
+                )}
               </div>
               <Button
                 type="button"

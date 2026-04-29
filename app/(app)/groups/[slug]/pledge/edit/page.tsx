@@ -59,6 +59,10 @@ export default async function EditPledgePage({ params }: EditPledgePageProps) {
           id: a.id,
           label: a.label,
           description: a.description,
+          kind: (a.kind as "do" | "abstain" | "monthly_total") ?? "do",
+          targetAmount:
+            a.targetAmount != null ? String(a.targetAmount) : "",
+          unit: a.unit ?? "",
         }))}
       />
     </div>
