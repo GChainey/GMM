@@ -1,10 +1,10 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
-import { activities, groups, pledges } from "@/db/schema";
+import { activities, groups, pledgeOptions, pledges } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
 import { isLocked } from "@/lib/dates";
-import { PledgeForm } from "@/components/pledge-form";
+import { PledgeForm, type PledgeOptionLite } from "@/components/pledge-form";
 
 interface EditPledgePageProps {
   params: Promise<{ slug: string }>;
@@ -36,6 +36,35 @@ export default async function EditPledgePage({ params }: EditPledgePageProps) {
     .where(eq(activities.pledgeId, pledge.id))
     .orderBy(asc(activities.sortOrder));
 
+  const allowedIds = [
+    ...group.allowedRewardOptionIds,
+    ...group.allowedPunishmentOptionIds,
+  ];
+  const options = allowedIds.length
+    ? await db
+        .select()
+        .from(pledgeOptions)
+        .where(inArray(pledgeOptions.id, allowedIds))
+    : [];
+
+  const toLite = (id: string): PledgeOptionLite | null => {
+    const o = options.find((x) => x.id === id);
+    if (!o) return null;
+    return {
+      id: o.id,
+      label: o.label,
+      description: o.description,
+      intensity: o.intensity as PledgeOptionLite["intensity"],
+      isSensitive: o.isSensitive,
+    };
+  };
+  const rewardOptions = group.allowedRewardOptionIds
+    .map(toLite)
+    .filter((o): o is PledgeOptionLite => o !== null);
+  const punishmentOptions = group.allowedPunishmentOptionIds
+    .map(toLite)
+    .filter((o): o is PledgeOptionLite => o !== null);
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10 md:px-10">
       <header>
@@ -53,6 +82,8 @@ export default async function EditPledgePage({ params }: EditPledgePageProps) {
       <PledgeForm
         slug={slug}
         defaultPledgeText={pledge.pledgeText}
+        defaultRewardOptionId={pledge.rewardOptionId}
+        defaultPunishmentOptionId={pledge.punishmentOptionId}
         defaultRewardText={pledge.rewardText}
         defaultPunishmentText={pledge.punishmentText}
         defaultActivities={acts.map((a) => ({
@@ -64,6 +95,10 @@ export default async function EditPledgePage({ params }: EditPledgePageProps) {
             a.targetAmount != null ? String(a.targetAmount) : "",
           unit: a.unit ?? "",
         }))}
+        rewardOptions={rewardOptions}
+        punishmentOptions={punishmentOptions}
+        allowCustomReward={group.allowCustomReward}
+        allowCustomPunishment={group.allowCustomPunishment}
       />
     </div>
   );

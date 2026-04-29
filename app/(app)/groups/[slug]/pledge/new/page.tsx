@@ -1,22 +1,17 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
-import { groups, pledges } from "@/db/schema";
+import { groups, pledgeOptions, pledges } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
 import { isLocked } from "@/lib/dates";
-import { PledgeForm } from "@/components/pledge-form";
+import { PledgeForm, type PledgeOptionLite } from "@/components/pledge-form";
 
 interface NewPledgePageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ reward?: string; punishment?: string }>;
 }
 
-export default async function NewPledgePage({
-  params,
-  searchParams,
-}: NewPledgePageProps) {
+export default async function NewPledgePage({ params }: NewPledgePageProps) {
   const { slug } = await params;
-  const { reward, punishment } = await searchParams;
   const userId = await requireUserId();
 
   const [group] = await db
@@ -36,6 +31,35 @@ export default async function NewPledgePage({
 
   if (existing.length > 0) redirect(`/groups/${slug}/pledge/edit`);
 
+  const allowedIds = [
+    ...group.allowedRewardOptionIds,
+    ...group.allowedPunishmentOptionIds,
+  ];
+  const options = allowedIds.length
+    ? await db
+        .select()
+        .from(pledgeOptions)
+        .where(inArray(pledgeOptions.id, allowedIds))
+    : [];
+
+  const toLite = (id: string): PledgeOptionLite | null => {
+    const o = options.find((x) => x.id === id);
+    if (!o) return null;
+    return {
+      id: o.id,
+      label: o.label,
+      description: o.description,
+      intensity: o.intensity as PledgeOptionLite["intensity"],
+      isSensitive: o.isSensitive,
+    };
+  };
+  const rewardOptions = group.allowedRewardOptionIds
+    .map(toLite)
+    .filter((o): o is PledgeOptionLite => o !== null);
+  const punishmentOptions = group.allowedPunishmentOptionIds
+    .map(toLite)
+    .filter((o): o is PledgeOptionLite => o !== null);
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10 md:px-10">
       <header>
@@ -54,8 +78,10 @@ export default async function NewPledgePage({
       <PledgeForm
         slug={slug}
         defaultPledgeText=""
-        defaultRewardText={reward ?? ""}
-        defaultPunishmentText={punishment ?? ""}
+        defaultRewardOptionId={null}
+        defaultPunishmentOptionId={null}
+        defaultRewardText=""
+        defaultPunishmentText=""
         defaultActivities={[
           {
             label: "",
@@ -65,6 +91,10 @@ export default async function NewPledgePage({
             unit: "",
           },
         ]}
+        rewardOptions={rewardOptions}
+        punishmentOptions={punishmentOptions}
+        allowCustomReward={group.allowCustomReward}
+        allowCustomPunishment={group.allowCustomPunishment}
       />
     </div>
   );
