@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusGlyph } from "@/components/status-glyph";
+import { OutcomeBlock } from "@/components/outcome-block";
 
 export default async function DashboardPage() {
   const userId = await requireUserId();
@@ -194,6 +195,17 @@ export default async function DashboardPage() {
                           🔥 {status.currentStreak}-day streak
                         </Badge>
                       </div>
+                      <OutcomeBlock
+                        slug={membership.group.slug}
+                        outcomeText={pledge.outcomeText}
+                        achievedAt={
+                          pledge.outcomeAchievedAt
+                            ? pledge.outcomeAchievedAt.toISOString()
+                            : null
+                        }
+                        canEdit
+                        variant="compact"
+                      />
                     </>
                   ) : (
                     <div className="flex items-center justify-between gap-2">

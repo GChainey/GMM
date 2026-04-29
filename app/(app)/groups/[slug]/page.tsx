@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/user-avatar";
+import { OutcomeBlock } from "@/components/outcome-block";
 import { Settings } from "lucide-react";
 
 interface PageProps {
@@ -219,25 +220,41 @@ export default async function PantheonPage({ params }: PageProps) {
                 </div>
 
                 {pledge ? (
-                  <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr]">
-                    <PledgeBlock label="Pledge" body={pledge.pledgeText} italic />
-                    <PledgeBlock
-                      label="Reward"
-                      kindLabel={
-                        pledge.rewardOptionId
-                          ? optionLabelById.get(pledge.rewardOptionId)
+                  <div className="flex flex-col gap-3">
+                    <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr]">
+                      <PledgeBlock
+                        label="Pledge"
+                        body={pledge.pledgeText}
+                        italic
+                      />
+                      <PledgeBlock
+                        label="Reward"
+                        kindLabel={
+                          pledge.rewardOptionId
+                            ? optionLabelById.get(pledge.rewardOptionId)
+                            : null
+                        }
+                        body={pledge.rewardText}
+                      />
+                      <PledgeBlock
+                        label="Punishment"
+                        kindLabel={
+                          pledge.punishmentOptionId
+                            ? optionLabelById.get(pledge.punishmentOptionId)
+                            : null
+                        }
+                        body={pledge.punishmentText}
+                      />
+                    </div>
+                    <OutcomeBlock
+                      slug={slug}
+                      outcomeText={pledge.outcomeText}
+                      achievedAt={
+                        pledge.outcomeAchievedAt
+                          ? pledge.outcomeAchievedAt.toISOString()
                           : null
                       }
-                      body={pledge.rewardText}
-                    />
-                    <PledgeBlock
-                      label="Punishment"
-                      kindLabel={
-                        pledge.punishmentOptionId
-                          ? optionLabelById.get(pledge.punishmentOptionId)
-                          : null
-                      }
-                      body={pledge.punishmentText}
+                      canEdit={user.id === userId}
                     />
                   </div>
                 ) : (
