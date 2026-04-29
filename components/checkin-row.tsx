@@ -12,6 +12,7 @@ import {
   toggleCheckinAction,
   uploadProofAction,
 } from "@/app/(app)/check-in/actions";
+import { useSounds } from "@/hooks/use-sounds";
 import { cn } from "@/lib/utils";
 
 type Kind = "do" | "abstain" | "monthly_total";
@@ -54,12 +55,14 @@ function DailyToggleRow({
   const [isPending, startTransition] = useTransition();
   const [isUploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const playSound = useSounds();
 
   function toggle(next: boolean) {
     setCompleted(next);
     startTransition(async () => {
       try {
         await toggleCheckinAction({ activityId, date, completed: next });
+        playSound(next ? "riteChecked" : "riteUnchecked");
       } catch (err) {
         setCompleted(!next);
         const msg = err instanceof Error ? err.message : "Could not save";
@@ -84,6 +87,7 @@ function DailyToggleRow({
       const result = await uploadProofAction(fd);
       setPhotoUrl(result.url);
       setCompleted(true);
+      playSound("proofInscribed");
       toast.success("Proof inscribed");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload failed";
@@ -192,6 +196,7 @@ function MonthlyTallyRow({
   const [isSaving, startSave] = useTransition();
   const [isUploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const playSound = useSounds();
 
   const totalSoFar = Math.max(0, monthTotalSoFar - savedAmount);
   const previewTotal = totalSoFar + (Number(todayAmount) || 0);
@@ -209,6 +214,7 @@ function MonthlyTallyRow({
       try {
         await setAmountAction({ activityId, date, amount: value });
         setSavedAmount(value);
+        if (value > 0) playSound("tallyInscribed");
         toast.success(value === 0 ? "Tally cleared" : "Tally inscribed");
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Could not save";
@@ -232,6 +238,7 @@ function MonthlyTallyRow({
       fd.set("file", file);
       const result = await uploadProofAction(fd);
       setPhotoUrl(result.url);
+      playSound("proofInscribed");
       toast.success("Proof inscribed");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload failed";

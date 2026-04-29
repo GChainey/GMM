@@ -7,6 +7,16 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-04-29",
+    title: "Bells beneath the marble",
+    items: [
+      "The temple finds its voice. A small chorus of synthesized bells now answers thy chief deeds — soft enough for a quiet office, gone in a breath.",
+      "Inscribing a pledge tolls a triple chime. Adding or unbinding a rite earns a brief pop. Each daily check brings a confident tick; tallies inscribe with a gold-leaf shimmer.",
+      "Proofs land with a shutter's whisper, and a rite's outcome, once shipped, ascends through three triumphant tones.",
+      "Quietly: the rites are pure synthesis — no audio files shipped — and we honour `prefers-reduced-motion`, so any mortal who hath asked for silence shall receive it.",
+    ],
+  },
+  {
+    date: "2026-04-29",
     title: "Charity mode — the fall feeds a cause",
     items: [
       "Pantheons gain a Charity mode. When a mortal falls, their forfeit need not be silver in a jar — let it flow to a worthy cause instead.",
