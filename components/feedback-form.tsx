@@ -7,7 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { submitFeedbackAction } from "@/app/(app)/changelog/actions";
 
-export function FeedbackForm() {
+interface FeedbackFormProps {
+  variant?: "card" | "plain";
+  onSubmitted?: () => void;
+}
+
+export function FeedbackForm({
+  variant = "card",
+  onSubmitted,
+}: FeedbackFormProps) {
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
   const [lastUrl, setLastUrl] = useState<string | null>(null);
@@ -24,11 +32,54 @@ export function FeedbackForm() {
         setBody("");
         setLastUrl(result.url);
         toast.success("Feedback dispatched. Gareth will see it.");
+        onSubmitted?.();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Could not send";
         toast.error(msg);
       }
     });
+  }
+
+  const fields = (
+    <div className="flex flex-col gap-3">
+      <Textarea
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        rows={6}
+        maxLength={4000}
+        placeholder="What broke? What would be goated? What's missing?"
+      />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          Thy display name is attached for context.
+        </p>
+        <Button
+          type="button"
+          disabled={isPending || body.trim().length < 4}
+          onClick={submit}
+          className="gilded font-display tracking-widest"
+        >
+          {isPending ? "Dispatching…" : "Send to Gareth"}
+        </Button>
+      </div>
+      {lastUrl && (
+        <p className="text-xs text-muted-foreground">
+          Last note filed:{" "}
+          <a
+            href={lastUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="underline hover:text-foreground"
+          >
+            {lastUrl}
+          </a>
+        </p>
+      )}
+    </div>
+  );
+
+  if (variant === "plain") {
+    return fields;
   }
 
   return (
@@ -40,41 +91,7 @@ export function FeedbackForm() {
           straight on Gareth&apos;s GitHub.
         </p>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <Textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={6}
-          maxLength={4000}
-          placeholder="What broke? What would be goated? What's missing?"
-        />
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">
-            Thy display name is attached for context.
-          </p>
-          <Button
-            type="button"
-            disabled={isPending || body.trim().length < 4}
-            onClick={submit}
-            className="gilded font-display tracking-widest"
-          >
-            {isPending ? "Dispatching…" : "Send to Gareth"}
-          </Button>
-        </div>
-        {lastUrl && (
-          <p className="text-xs text-muted-foreground">
-            Last note filed:{" "}
-            <a
-              href={lastUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="underline hover:text-foreground"
-            >
-              {lastUrl}
-            </a>
-          </p>
-        )}
-      </CardContent>
+      <CardContent>{fields}</CardContent>
     </Card>
   );
 }

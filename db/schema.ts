@@ -16,6 +16,10 @@ export const users = pgTable("users", {
   displayName: text("display_name").notNull(),
   avatarUrl: text("avatar_url"),
   timezone: text("timezone").notNull().default("UTC"),
+  faceStyle: integer("face_style"),
+  faceColor: integer("face_color"),
+  faceGaze: integer("face_gaze"),
+  faceDepth: integer("face_depth"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -1,6 +1,6 @@
 {
-  "id": "4a8aa88c-da3c-4749-8c00-6cce62638c03",
-  "prevId": "4c32348c-42ff-4bc8-9f1e-5ca5e4b34466",
+  "id": "2ee7b6ee-1f56-4db7-a79d-2e2e6c65330a",
+  "prevId": "4a8aa88c-da3c-4749-8c00-6cce62638c03",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -402,6 +402,34 @@
           "primaryKey": false,
           "notNull": true
         },
+        "allowed_reward_option_ids": {
+          "name": "allowed_reward_option_ids",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "ARRAY[]::text[]"
+        },
+        "allowed_punishment_option_ids": {
+          "name": "allowed_punishment_option_ids",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "ARRAY[]::text[]"
+        },
+        "allow_custom_reward": {
+          "name": "allow_custom_reward",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "allow_custom_punishment": {
+          "name": "allow_custom_punishment",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -536,6 +564,107 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.pledge_options": {
+      "name": "pledge_options",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "intensity": {
+          "name": "intensity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'standard'"
+        },
+        "is_sensitive": {
+          "name": "is_sensitive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "pledge_options_group_idx": {
+          "name": "pledge_options_group_idx",
+          "columns": [
+            {
+              "expression": "group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "pledge_options_group_id_groups_id_fk": {
+          "name": "pledge_options_group_id_groups_id_fk",
+          "tableFrom": "pledge_options",
+          "tableTo": "groups",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.pledges": {
       "name": "pledges",
       "schema": "",
@@ -578,6 +707,18 @@
           "primaryKey": false,
           "notNull": true,
           "default": "''"
+        },
+        "reward_option_id": {
+          "name": "reward_option_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "punishment_option_id": {
+          "name": "punishment_option_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "locked_at": {
           "name": "locked_at",
