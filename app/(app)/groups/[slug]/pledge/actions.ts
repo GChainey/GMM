@@ -23,6 +23,7 @@ const activitySchema = z
     kind: z.enum(["do", "abstain", "monthly_total"]).default("do"),
     targetAmount: z.number().int().positive().nullable().default(null),
     unit: z.string().max(24).nullable().default(null),
+    outcomeText: z.string().max(1000).default(""),
   })
   .refine(
     (a) => a.kind !== "monthly_total" || (a.targetAmount ?? 0) > 0,
@@ -36,7 +37,6 @@ const pledgeSchema = z.object({
   punishmentOptionId: z.string().nullable().default(null),
   rewardText: z.string().max(1000).default(""),
   punishmentText: z.string().max(1000).default(""),
-  outcomeText: z.string().max(1000).default(""),
   activities: z.array(activitySchema).max(20),
 });
 
@@ -68,7 +68,6 @@ export async function savePledgeAction(formData: FormData) {
         : null,
     rewardText: String(formData.get("rewardText") ?? ""),
     punishmentText: String(formData.get("punishmentText") ?? ""),
-    outcomeText: String(formData.get("outcomeText") ?? ""),
     activities: parsedActivities,
   });
 
@@ -167,7 +166,6 @@ export async function savePledgeAction(formData: FormData) {
         punishmentText: data.punishmentText,
         rewardOptionId: data.rewardOptionId,
         punishmentOptionId: data.punishmentOptionId,
-        outcomeText: data.outcomeText,
       })
       .returning();
   } else {
@@ -179,7 +177,6 @@ export async function savePledgeAction(formData: FormData) {
         punishmentText: data.punishmentText,
         rewardOptionId: data.rewardOptionId,
         punishmentOptionId: data.punishmentOptionId,
-        outcomeText: data.outcomeText,
         updatedAt: new Date(),
       })
       .where(eq(pledges.id, pledge.id));
@@ -197,6 +194,7 @@ export async function savePledgeAction(formData: FormData) {
           kind: act.kind,
           targetAmount: act.targetAmount,
           unit: act.unit,
+          outcomeText: act.outcomeText,
         })
         .where(eq(activities.id, act.id));
       keepIds.push(act.id);
@@ -211,6 +209,7 @@ export async function savePledgeAction(formData: FormData) {
           kind: act.kind,
           targetAmount: act.targetAmount,
           unit: act.unit,
+          outcomeText: act.outcomeText,
         })
         .returning({ id: activities.id });
       keepIds.push(created.id);
@@ -238,42 +237,44 @@ export async function savePledgeAction(formData: FormData) {
 }
 
 const outcomeSchema = z.object({
-  slug: z.string(),
+  activityId: z.string(),
   shipped: z.boolean(),
 });
 
 export async function markOutcomeShippedAction(input: {
-  slug: string;
+  activityId: string;
   shipped: boolean;
 }) {
   const userId = await requireUserId();
   const data = outcomeSchema.parse(input);
 
-  const [group] = await db
-    .select()
-    .from(groups)
-    .where(eq(groups.slug, data.slug))
+  const [row] = await db
+    .select({
+      activity: activities,
+      pledge: pledges,
+      group: groups,
+    })
+    .from(activities)
+    .innerJoin(pledges, eq(pledges.id, activities.pledgeId))
+    .innerJoin(groups, eq(groups.id, pledges.groupId))
+    .where(eq(activities.id, data.activityId))
     .limit(1);
-  if (!group) throw new Error("Pantheon not found");
 
-  const [pledge] = await db
-    .select()
-    .from(pledges)
-    .where(and(eq(pledges.userId, userId), eq(pledges.groupId, group.id)))
-    .limit(1);
-  if (!pledge) throw new Error("No pledge to mark.");
-  if (!pledge.outcomeText.trim()) {
-    throw new Error("Inscribe thy month-end outcome first.");
+  if (!row) throw new Error("Rite not found.");
+  if (row.pledge.userId !== userId) {
+    throw new Error("Thou canst only mark thine own outcome.");
+  }
+  if (!row.activity.outcomeText.trim()) {
+    throw new Error("Inscribe this rite's month-end outcome first.");
   }
 
   await db
-    .update(pledges)
+    .update(activities)
     .set({
       outcomeAchievedAt: data.shipped ? new Date() : null,
-      updatedAt: new Date(),
     })
-    .where(eq(pledges.id, pledge.id));
+    .where(eq(activities.id, row.activity.id));
 
-  revalidatePath(`/groups/${data.slug}`);
+  revalidatePath(`/groups/${row.group.slug}`);
   revalidatePath(`/dashboard`);
 }

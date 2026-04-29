@@ -246,16 +246,25 @@ export default async function PantheonPage({ params }: PageProps) {
                         body={pledge.punishmentText}
                       />
                     </div>
-                    <OutcomeBlock
-                      slug={slug}
-                      outcomeText={pledge.outcomeText}
-                      achievedAt={
-                        pledge.outcomeAchievedAt
-                          ? pledge.outcomeAchievedAt.toISOString()
-                          : null
-                      }
-                      canEdit={user.id === userId}
-                    />
+                    {acts.some((a) => a.outcomeText.trim() || user.id === userId) && (
+                      <div className="flex flex-col gap-2">
+                        {acts.map((a) => (
+                          <OutcomeBlock
+                            key={a.id}
+                            slug={slug}
+                            activityId={a.id}
+                            activityLabel={a.label}
+                            outcomeText={a.outcomeText}
+                            achievedAt={
+                              a.outcomeAchievedAt
+                                ? a.outcomeAchievedAt.toISOString()
+                                : null
+                            }
+                            canEdit={user.id === userId}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="font-display italic text-muted-foreground">
