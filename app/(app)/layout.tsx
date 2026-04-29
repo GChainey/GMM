@@ -29,6 +29,12 @@ export default async function AppLayout({
             <Link href="/groups" className="hover:text-foreground">
               Pantheons
             </Link>
+            <Link href="/profile" className="hover:text-foreground">
+              Visage
+            </Link>
+            <Link href="/changelog" className="hover:text-foreground">
+              Codex
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">

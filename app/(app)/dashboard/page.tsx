@@ -72,11 +72,16 @@ export default async function DashboardPage() {
       acts.some((a) => a.id === c.activityId),
     );
     const status = computeStatus({
-      activityIds: acts.map((a) => a.id),
+      activities: acts.map((a) => ({
+        id: a.id,
+        kind: (a.kind as "do" | "abstain" | "monthly_total") ?? "do",
+        targetAmount: a.targetAmount,
+      })),
       checkins: checks.map((c) => ({
         activityId: c.activityId,
         date: typeof c.date === "string" ? c.date : String(c.date),
         completed: c.completed,
+        amount: c.amount,
       })),
       strikeLimit: m.group.strikeLimit,
       timezone: "UTC",

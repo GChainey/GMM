@@ -35,26 +35,25 @@ export async function ensureUserRow() {
     await db.insert(users).values({
       id: clerkUser.id,
       displayName,
-      avatarUrl: clerkUser.imageUrl ?? null,
+      avatarUrl: null,
       timezone: "UTC",
     });
     return {
       id: clerkUser.id,
       displayName,
-      avatarUrl: clerkUser.imageUrl ?? null,
+      avatarUrl: null,
       timezone: "UTC",
       createdAt: new Date(),
     };
   }
 
   const row = existing[0];
-  // Light sync: keep displayName/avatar fresh.
-  if (row.displayName !== displayName || row.avatarUrl !== clerkUser.imageUrl) {
+  if (row.displayName !== displayName) {
     await db
       .update(users)
-      .set({ displayName, avatarUrl: clerkUser.imageUrl ?? null })
+      .set({ displayName })
       .where(eq(users.id, clerkUser.id));
-    return { ...row, displayName, avatarUrl: clerkUser.imageUrl ?? null };
+    return { ...row, displayName };
   }
   return row;
 }

@@ -9,11 +9,19 @@ import { activities, groupMemberships, groups, pledges } from "@/db/schema";
 import { ensureUserRow, requireUserId } from "@/lib/auth";
 import { isLocked } from "@/lib/dates";
 
-const activitySchema = z.object({
-  id: z.string().optional(),
-  label: z.string().min(1).max(120),
-  description: z.string().max(500).default(""),
-});
+const activitySchema = z
+  .object({
+    id: z.string().optional(),
+    label: z.string().min(1).max(120),
+    description: z.string().max(500).default(""),
+    kind: z.enum(["do", "abstain", "monthly_total"]).default("do"),
+    targetAmount: z.number().int().positive().nullable().default(null),
+    unit: z.string().max(24).nullable().default(null),
+  })
+  .refine(
+    (a) => a.kind !== "monthly_total" || (a.targetAmount ?? 0) > 0,
+    { message: "Monthly tallies need a positive target." },
+  );
 
 const pledgeSchema = z.object({
   slug: z.string(),
@@ -112,6 +120,9 @@ export async function savePledgeAction(formData: FormData) {
           label: act.label,
           description: act.description,
           sortOrder: idx,
+          kind: act.kind,
+          targetAmount: act.targetAmount,
+          unit: act.unit,
         })
         .where(eq(activities.id, act.id));
       keepIds.push(act.id);
@@ -123,6 +134,9 @@ export async function savePledgeAction(formData: FormData) {
           label: act.label,
           description: act.description,
           sortOrder: idx,
+          kind: act.kind,
+          targetAmount: act.targetAmount,
+          unit: act.unit,
         })
         .returning({ id: activities.id });
       keepIds.push(created.id);

@@ -98,6 +98,9 @@ export const activities = pgTable(
     label: text("label").notNull(),
     description: text("description").notNull().default(""),
     sortOrder: integer("sort_order").notNull().default(0),
+    kind: text("kind").notNull().default("do"),
+    targetAmount: integer("target_amount"),
+    unit: text("unit"),
   },
   (t) => [index("activities_pledge_idx").on(t.pledgeId)],
 );
@@ -114,6 +117,7 @@ export const dailyCheckins = pgTable(
       .references(() => activities.id, { onDelete: "cascade" }),
     date: date("date").notNull(),
     completed: boolean("completed").notNull().default(false),
+    amount: integer("amount"),
     photoUrl: text("photo_url"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -132,10 +136,35 @@ export const dailyCheckins = pgTable(
   ],
 );
 
+export const journalEntries = pgTable(
+  "journal_entries",
+  {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    body: text("body").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("journal_entries_user_date_idx").on(t.userId, t.date),
+  ],
+);
+
+export const ACTIVITY_KINDS = ["do", "abstain", "monthly_total"] as const;
+export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
+
 export type User = typeof users.$inferSelect;
 export type Group = typeof groups.$inferSelect;
 export type GroupMembership = typeof groupMemberships.$inferSelect;
 export type Pledge = typeof pledges.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
 export type DailyCheckin = typeof dailyCheckins.$inferSelect;
+export type JournalEntry = typeof journalEntries.$inferSelect;
 

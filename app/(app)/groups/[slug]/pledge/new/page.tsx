@@ -56,7 +56,15 @@ export default async function NewPledgePage({
         defaultPledgeText=""
         defaultRewardText={reward ?? ""}
         defaultPunishmentText={punishment ?? ""}
-        defaultActivities={[{ label: "", description: "" }]}
+        defaultActivities={[
+          {
+            label: "",
+            description: "",
+            kind: "do",
+            targetAmount: "",
+            unit: "",
+          },
+        ]}
       />
     </div>
   );
