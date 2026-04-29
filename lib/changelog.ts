@@ -15,6 +15,16 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     date: "2026-04-29",
+    title: "Toward a month's-end ship",
+    items: [
+      "Pledges gain an Outcome — the deliverable thou wilt show the pantheon on May 31. A recital, a release, an exhibition, a demo. Daily rites lead somewhere now.",
+      "Inscribe thy outcome alongside reward and punishment; it locks with the rest of the pledge at midnight on May 1.",
+      "When the day comes, mark thine outcome shipped from the pantheon page — a green seal stands in for the tally.",
+      "The dashboard and pantheon view now surface every mortal's outcome beside their pledge.",
+    ],
+  },
+  {
+    date: "2026-04-29",
     title: "Marble sidebar, mutable visage",
     items: [
       "New monastery sidebar — Altar, Daily Rite, Pantheons, Visage, Codex — with active-state highlighting and ⌘B to collapse.",

@@ -29,6 +29,13 @@
       "when": 1777443118558,
       "tag": "0003_pledge_options",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777444090809,
+      "tag": "0004_pledge_outcomes",
+      "breakpoints": true
     }
   ]
 }
