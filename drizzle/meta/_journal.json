@@ -43,6 +43,13 @@
       "when": 1777471086568,
       "tag": "0005_activity_outcomes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777471903577,
+      "tag": "0006_charity_mode",
+      "breakpoints": true
     }
   ]
 }

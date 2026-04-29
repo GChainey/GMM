@@ -31,6 +31,15 @@ export interface PledgeOptionLite {
   isSensitive: boolean;
 }
 
+export interface CharityContext {
+  enabled: boolean;
+  selection: "admin" | "individual";
+  groupCharityName: string;
+  groupCharityUrl: string;
+  defaultName: string;
+  defaultUrl: string;
+}
+
 interface PledgeFormProps {
   slug: string;
   defaultPledgeText: string;
@@ -43,6 +52,7 @@ interface PledgeFormProps {
   punishmentOptions: PledgeOptionLite[];
   allowCustomReward: boolean;
   allowCustomPunishment: boolean;
+  charity: CharityContext;
 }
 
 const KIND_LABEL: Record<ActivityKind, string> = {
@@ -71,6 +81,7 @@ export function PledgeForm({
   punishmentOptions,
   allowCustomReward,
   allowCustomPunishment,
+  charity,
 }: PledgeFormProps) {
   const initial: ActivityDraft[] =
     defaultActivities.length > 0
@@ -179,6 +190,18 @@ export function PledgeForm({
       toast.error("Pick a punishment.");
       return;
     }
+    if (charity.enabled && charity.selection === "individual") {
+      const name = String(formData.get("charityName") ?? "").trim();
+      if (!name) {
+        toast.error("Name thy cause.");
+        return;
+      }
+      const url = String(formData.get("charityUrl") ?? "").trim();
+      if (url && !/^https?:\/\//i.test(url)) {
+        toast.error("Charity link must begin with http:// or https://.");
+        return;
+      }
+    }
 
     formData.set(
       "rewardOptionId",
@@ -251,6 +274,75 @@ export function PledgeForm({
               selected={punishmentSelected}
             />
           </div>
+          {charity.enabled && (
+            <div className="grid gap-2 rounded-md border border-divine/40 bg-divine/5 p-3">
+              <p className="font-display text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                Charity mode
+              </p>
+              {charity.selection === "individual" ? (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Name the cause thou wouldst champion. Should an ascended
+                    pantheon-mate stand whilst thou fallest, thy forfeit flows
+                    to <em>their</em> charity — not thine. Choose a cause thou
+                    wouldst gladly fund either way.
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
+                    <div className="grid gap-2">
+                      <Label htmlFor="charityName">Charity name</Label>
+                      <Input
+                        id="charityName"
+                        name="charityName"
+                        defaultValue={charity.defaultName}
+                        maxLength={120}
+                        placeholder="e.g. Médecins Sans Frontières"
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="charityUrl">Link (optional)</Label>
+                      <Input
+                        id="charityUrl"
+                        name="charityUrl"
+                        type="url"
+                        defaultValue={charity.defaultUrl}
+                        maxLength={500}
+                        placeholder="https://…"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm">
+                    The founder hath chosen one cause for all:{" "}
+                    <span className="font-display tracking-wide">
+                      {charity.groupCharityName || "(unnamed)"}
+                    </span>
+                    {charity.groupCharityUrl && (
+                      <>
+                        {" "}
+                        —{" "}
+                        <a
+                          href={charity.groupCharityUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline"
+                        >
+                          link
+                        </a>
+                      </>
+                    )}
+                    .
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Every fall in this pantheon feeds this cause. No further
+                    choice is required.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

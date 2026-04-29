@@ -6,6 +6,7 @@ import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import {
+  CHARITY_SELECTIONS,
   groupMemberships,
   groups,
   pledgeOptions,
@@ -23,6 +24,51 @@ import {
 } from "@/lib/pledge-options";
 
 const presetSchema = z.enum(PRESET_KEYS);
+
+const charitySchema = z.object({
+  charityModeEnabled: z.boolean(),
+  charitySelection: z.enum(CHARITY_SELECTIONS),
+  charityName: z.string().max(120).default(""),
+  charityUrl: z.string().max(500).default(""),
+});
+
+function normalizeCharity(input: z.infer<typeof charitySchema>) {
+  if (!input.charityModeEnabled) {
+    return {
+      charityModeEnabled: false,
+      charitySelection: input.charitySelection,
+      charityName: "",
+      charityUrl: "",
+    };
+  }
+  const trimmedName = input.charityName.trim();
+  const trimmedUrl = input.charityUrl.trim();
+  if (input.charitySelection === "admin" && trimmedName.length === 0) {
+    throw new Error(
+      "Name the cause — when the founder picks, all donations flow to a single charity.",
+    );
+  }
+  if (trimmedUrl.length > 0 && !/^https?:\/\//i.test(trimmedUrl)) {
+    throw new Error("The charity link must begin with http:// or https://.");
+  }
+  return {
+    charityModeEnabled: true,
+    charitySelection: input.charitySelection,
+    charityName: input.charitySelection === "admin" ? trimmedName : "",
+    charityUrl: input.charitySelection === "admin" ? trimmedUrl : "",
+  };
+}
+
+function readCharityForm(formData: FormData) {
+  return charitySchema.parse({
+    charityModeEnabled: formData.get("charityModeEnabled") === "on",
+    charitySelection: String(
+      formData.get("charitySelection") ?? "individual",
+    ),
+    charityName: String(formData.get("charityName") ?? ""),
+    charityUrl: String(formData.get("charityUrl") ?? ""),
+  });
+}
 
 const createGroupSchema = z.object({
   name: z.string().min(2).max(80),
@@ -60,6 +106,7 @@ export async function createGroupAction(formData: FormData) {
     preset: String(formData.get("preset") ?? DEFAULT_PRESET),
   });
 
+  const charity = normalizeCharity(readCharityForm(formData));
   const preset = PRESETS[parsed.preset];
   const slug = await uniqueSlug(parsed.name);
   const inviteToken = createInviteToken();
@@ -78,6 +125,10 @@ export async function createGroupAction(formData: FormData) {
       allowedPunishmentOptionIds: seedSlugsToIds(preset.punishmentSlugs),
       allowCustomReward: preset.allowCustomReward,
       allowCustomPunishment: preset.allowCustomPunishment,
+      charityModeEnabled: charity.charityModeEnabled,
+      charitySelection: charity.charitySelection,
+      charityName: charity.charityName,
+      charityUrl: charity.charityUrl,
     })
     .returning();
 
@@ -197,6 +248,8 @@ export async function updateGroupSettingsAction(formData: FormData) {
     allowCustomPunishment: formData.get("allowCustomPunishment") === "on",
   });
 
+  const charity = normalizeCharity(readCharityForm(formData));
+
   const validRewards = await validateOptionIds(
     group.id,
     parsed.allowedRewardOptionIds,
@@ -236,6 +289,10 @@ export async function updateGroupSettingsAction(formData: FormData) {
       allowedPunishmentOptionIds: validPunishments,
       allowCustomReward: parsed.allowCustomReward,
       allowCustomPunishment: parsed.allowCustomPunishment,
+      charityModeEnabled: charity.charityModeEnabled,
+      charitySelection: charity.charitySelection,
+      charityName: charity.charityName,
+      charityUrl: charity.charityUrl,
     })
     .where(eq(groups.id, group.id));
 

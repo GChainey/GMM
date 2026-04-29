@@ -37,6 +37,8 @@ const pledgeSchema = z.object({
   punishmentOptionId: z.string().nullable().default(null),
   rewardText: z.string().max(1000).default(""),
   punishmentText: z.string().max(1000).default(""),
+  charityName: z.string().max(120).default(""),
+  charityUrl: z.string().max(500).default(""),
   activities: z.array(activitySchema).max(20),
 });
 
@@ -68,6 +70,8 @@ export async function savePledgeAction(formData: FormData) {
         : null,
     rewardText: String(formData.get("rewardText") ?? ""),
     punishmentText: String(formData.get("punishmentText") ?? ""),
+    charityName: String(formData.get("charityName") ?? ""),
+    charityUrl: String(formData.get("charityUrl") ?? ""),
     activities: parsedActivities,
   });
 
@@ -149,6 +153,21 @@ export async function savePledgeAction(formData: FormData) {
     throw new Error("Pick a punishment from the pantheon's list.");
   }
 
+  let charityName = "";
+  let charityUrl = "";
+  if (group.charityModeEnabled && group.charitySelection === "individual") {
+    charityName = data.charityName.trim();
+    charityUrl = data.charityUrl.trim();
+    if (charityName.length === 0) {
+      throw new Error(
+        "Name thy cause — in this pantheon, each mortal's fall feeds the winner's chosen charity.",
+      );
+    }
+    if (charityUrl.length > 0 && !/^https?:\/\//i.test(charityUrl)) {
+      throw new Error("The charity link must begin with http:// or https://.");
+    }
+  }
+
   let [pledge] = await db
     .select()
     .from(pledges)
@@ -166,6 +185,8 @@ export async function savePledgeAction(formData: FormData) {
         punishmentText: data.punishmentText,
         rewardOptionId: data.rewardOptionId,
         punishmentOptionId: data.punishmentOptionId,
+        charityName,
+        charityUrl,
       })
       .returning();
   } else {
@@ -177,6 +198,8 @@ export async function savePledgeAction(formData: FormData) {
         punishmentText: data.punishmentText,
         rewardOptionId: data.rewardOptionId,
         punishmentOptionId: data.punishmentOptionId,
+        charityName,
+        charityUrl,
         updatedAt: new Date(),
       })
       .where(eq(pledges.id, pledge.id));

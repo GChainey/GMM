@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-04-29",
+    title: "Charity mode — the fall feeds a cause",
+    items: [
+      "Pantheons gain a Charity mode. When a mortal falls, their forfeit need not be silver in a jar — let it flow to a worthy cause instead.",
+      "Founders may choose the rule of the rite: each mortal names their own charity (a fall then feeds the winner's cause), or the founder picks one cause for all (every fall feeds the same coffer).",
+      "Inscribe thy chosen cause alongside thy reward and punishment. Names appear on the pantheon page, and a link may be set for the truly diligent.",
+    ],
+  },
+  {
+    date: "2026-04-29",
     title: "Visage save restored, gaze made plain",
     items: [
       "Saving thy visage no longer angers the server — the artisan's chisel reaches the marble. (A wayward import was summoning React rites in the wrong sanctum.)",

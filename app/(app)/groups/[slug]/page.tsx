@@ -127,7 +127,46 @@ export default async function PantheonPage({ params }: PageProps) {
             <Badge variant="outline" className="font-display">
               {memberRows.length} mortal{memberRows.length === 1 ? "" : "s"}
             </Badge>
+            {group.charityModeEnabled && (
+              <Badge
+                variant="outline"
+                className="border-divine/50 bg-divine/10 font-display text-divine"
+              >
+                Charity mode ·{" "}
+                {group.charitySelection === "admin" ? "founder picks" : "each picks"}
+              </Badge>
+            )}
           </div>
+          {group.charityModeEnabled && (
+            <p className="mt-2 max-w-2xl text-xs italic text-muted-foreground">
+              When a mortal falls, their forfeit flows to{" "}
+              {group.charitySelection === "admin" ? (
+                <>
+                  the pantheon&apos;s chosen cause:{" "}
+                  <span className="font-display not-italic tracking-wide text-foreground">
+                    {group.charityName || "(unnamed)"}
+                  </span>
+                  {group.charityUrl && (
+                    <>
+                      {" "}
+                      —{" "}
+                      <a
+                        href={group.charityUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline"
+                      >
+                        link
+                      </a>
+                    </>
+                  )}
+                  .
+                </>
+              ) : (
+                <>the winner&apos;s chosen charity. Each mortal names their own.</>
+              )}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           {!isMember && (
@@ -246,6 +285,34 @@ export default async function PantheonPage({ params }: PageProps) {
                         body={pledge.punishmentText}
                       />
                     </div>
+                    {group.charityModeEnabled &&
+                      group.charitySelection === "individual" &&
+                      pledge.charityName && (
+                        <div className="rounded-md border border-divine/40 bg-divine/5 p-3 text-sm">
+                          <p className="font-display text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
+                            Champions the cause
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-display tracking-wide">
+                              {pledge.charityName}
+                            </span>
+                            {pledge.charityUrl && (
+                              <>
+                                {" "}
+                                —{" "}
+                                <a
+                                  href={pledge.charityUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="underline"
+                                >
+                                  link
+                                </a>
+                              </>
+                            )}
+                          </p>
+                        </div>
+                      )}
                     {acts.some((a) => a.outcomeText.trim() || user.id === userId) && (
                       <div className="flex flex-col gap-2">
                         {acts.map((a) => (
