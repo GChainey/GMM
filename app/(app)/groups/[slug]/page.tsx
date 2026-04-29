@@ -13,7 +13,7 @@ import {
 } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
 import { buildCells, computeStatus } from "@/lib/status";
-import { challengeDates } from "@/lib/dates";
+import { challengeDates, resolveToday } from "@/lib/dates";
 import { StatusGlyph } from "@/components/status-glyph";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -100,6 +100,7 @@ export default async function PantheonPage({ params }: PageProps) {
   const optionLabelById = new Map(optionRows.map((o) => [o.id, o.label]));
 
   const dates = challengeDates();
+  const todayIso = await resolveToday("UTC");
   const isOwner = group.ownerId === userId;
   const isMember = myMembership.length > 0;
 
@@ -216,9 +217,9 @@ export default async function PantheonPage({ params }: PageProps) {
             activities: actLite,
             checkins: checks,
             strikeLimit: group.strikeLimit,
-            timezone: user.timezone ?? "UTC",
+            todayIso,
           });
-          const cells = buildCells(actLite, checks, user.timezone ?? "UTC");
+          const cells = buildCells(actLite, checks, todayIso);
 
           return (
             <Card

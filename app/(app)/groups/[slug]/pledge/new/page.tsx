@@ -22,7 +22,7 @@ export default async function NewPledgePage({ params }: NewPledgePageProps) {
     .limit(1);
   if (!group) notFound();
 
-  if (isLocked()) redirect(`/groups/${slug}`);
+  if (await isLocked()) redirect(`/groups/${slug}`);
 
   const existing = await db
     .select()

@@ -1,9 +1,17 @@
 // Date helpers anchored on May 2026 in user's timezone.
 
+import { cookies } from "next/headers";
+
 export const CHALLENGE_YEAR = 2026;
 export const CHALLENGE_MONTH = 5; // May (1-indexed)
 
 const TIMEZONE_FALLBACK = "UTC";
+
+export const DEMO_DATE_COOKIE = "gmm_demo_date";
+
+function isDemoMode(): boolean {
+  return process.env.NEXT_PUBLIC_DEMO_MODE === "1";
+}
 
 export function todayIsoInTz(timezone: string | null | undefined): string {
   const tz = timezone ?? TIMEZONE_FALLBACK;
@@ -15,6 +23,22 @@ export function todayIsoInTz(timezone: string | null | undefined): string {
     day: "2-digit",
   });
   return formatter.format(now);
+}
+
+export async function getDemoToday(): Promise<string | null> {
+  if (!isDemoMode()) return null;
+  const store = await cookies();
+  const value = store.get(DEMO_DATE_COOKIE)?.value;
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  return value;
+}
+
+export async function resolveToday(
+  timezone: string | null | undefined,
+): Promise<string> {
+  const demo = await getDemoToday();
+  if (demo) return demo;
+  return todayIsoInTz(timezone);
 }
 
 export function challengeStartIso(): string {
@@ -42,14 +66,12 @@ export function challengeDayNumber(iso: string): number | null {
   return Number(iso.slice(8, 10));
 }
 
-export function isChallengeOver(timezone: string | null | undefined): boolean {
-  return todayIsoInTz(timezone) > challengeEndIso();
+export function isChallengeOver(today: string): boolean {
+  return today > challengeEndIso();
 }
 
-export function hasChallengeStarted(
-  timezone: string | null | undefined,
-): boolean {
-  return todayIsoInTz(timezone) >= challengeStartIso();
+export function hasChallengeStarted(today: string): boolean {
+  return today >= challengeStartIso();
 }
 
 export function lockDateForGroup(): Date {
@@ -58,6 +80,9 @@ export function lockDateForGroup(): Date {
   return new Date(Date.UTC(CHALLENGE_YEAR, 4, 1, 0, 0, 0));
 }
 
-export function isLocked(now: Date = new Date()): boolean {
-  return now >= lockDateForGroup();
+export async function isLocked(): Promise<boolean> {
+  // Demo mode: lock follows the demo clock so users can play with both states.
+  const demo = await getDemoToday();
+  if (demo) return demo >= challengeStartIso();
+  return new Date() >= lockDateForGroup();
 }

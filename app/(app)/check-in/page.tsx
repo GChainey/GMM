@@ -14,7 +14,7 @@ import {
   challengeStartIso,
   hasChallengeStarted,
   isChallengeOver,
-  todayIsoInTz,
+  resolveToday,
 } from "@/lib/dates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,9 @@ import { JournalEntry } from "@/components/journal-entry";
 
 export default async function CheckInPage() {
   const userId = await requireUserId();
-  const today = todayIsoInTz("UTC");
-  const started = hasChallengeStarted("UTC");
-  const over = isChallengeOver("UTC");
+  const today = await resolveToday("UTC");
+  const started = hasChallengeStarted(today);
+  const over = isChallengeOver(today);
 
   const myMemberships = await db
     .select({
