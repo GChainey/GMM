@@ -7,6 +7,7 @@ import {
   dailyCheckins,
   groupMemberships,
   groups,
+  pledgeOptions,
   pledges,
   users,
 } from "@/db/schema";
@@ -81,6 +82,21 @@ export default async function PantheonPage({ params }: PageProps) {
         .from(dailyCheckins)
         .where(inArray(dailyCheckins.activityId, activityIds))
     : [];
+
+  const optionIds = Array.from(
+    new Set(
+      allPledges
+        .flatMap((p) => [p.rewardOptionId, p.punishmentOptionId])
+        .filter((v): v is string => Boolean(v)),
+    ),
+  );
+  const optionRows = optionIds.length
+    ? await db
+        .select()
+        .from(pledgeOptions)
+        .where(inArray(pledgeOptions.id, optionIds))
+    : [];
+  const optionLabelById = new Map(optionRows.map((o) => [o.id, o.label]));
 
   const dates = challengeDates();
   const isOwner = group.ownerId === userId;
@@ -199,9 +215,22 @@ export default async function PantheonPage({ params }: PageProps) {
                 {pledge ? (
                   <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr]">
                     <PledgeBlock label="Pledge" body={pledge.pledgeText} italic />
-                    <PledgeBlock label="Reward" body={pledge.rewardText} />
+                    <PledgeBlock
+                      label="Reward"
+                      kindLabel={
+                        pledge.rewardOptionId
+                          ? optionLabelById.get(pledge.rewardOptionId)
+                          : null
+                      }
+                      body={pledge.rewardText}
+                    />
                     <PledgeBlock
                       label="Punishment"
+                      kindLabel={
+                        pledge.punishmentOptionId
+                          ? optionLabelById.get(pledge.punishmentOptionId)
+                          : null
+                      }
                       body={pledge.punishmentText}
                     />
                   </div>
@@ -324,20 +353,27 @@ function PledgeBlock({
   label,
   body,
   italic,
+  kindLabel,
 }: {
   label: string;
   body: string;
   italic?: boolean;
+  kindLabel?: string | null;
 }) {
   return (
     <div className="rounded-md border border-border/50 bg-background/40 p-3">
       <p className="font-display text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
         {label}
       </p>
+      {kindLabel && (
+        <p className="mt-1 inline-block rounded-sm border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[0.65rem] uppercase tracking-widest text-gold-foreground">
+          {kindLabel}
+        </p>
+      )}
       <p
         className={`mt-1 whitespace-pre-line text-sm ${italic ? "italic" : ""} ${body ? "" : "text-muted-foreground"}`}
       >
-        {body || "—"}
+        {body || (kindLabel ? "" : "—")}
       </p>
     </div>
   );

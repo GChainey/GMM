@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { createGroupAction } from "../actions";
+import { DEFAULT_PRESET, PRESETS, PRESET_KEYS } from "@/lib/pledge-options";
 
 export default function NewGroupPage() {
   return (
@@ -75,31 +76,45 @@ export default function NewGroupPage() {
               </div>
               <Switch id="isPublic" name="isPublic" defaultChecked />
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
+
+            <fieldset className="flex flex-col gap-3 rounded-md border border-border/60 p-3">
+              <legend className="px-1 font-display text-sm tracking-widest">
+                Reward & punishment preset
+              </legend>
+              <p className="text-xs text-muted-foreground">
+                Choose the rite. Members will pick from the list (and write
+                their own where allowed). Thou canst fine-tune the options
+                after founding.
+              </p>
               <div className="grid gap-2">
-                <Label htmlFor="rewardText">Default reward (optional)</Label>
-                <Textarea
-                  id="rewardText"
-                  name="rewardText"
-                  rows={3}
-                  maxLength={500}
-                  placeholder="What awaits the ascended?"
-                />
+                {PRESET_KEYS.map((key) => {
+                  const p = PRESETS[key];
+                  return (
+                    <label
+                      key={key}
+                      className="flex cursor-pointer items-start gap-3 rounded-md border border-border/40 p-3 has-checked:border-gold has-checked:bg-gold/5"
+                    >
+                      <input
+                        type="radio"
+                        name="preset"
+                        value={key}
+                        defaultChecked={key === DEFAULT_PRESET}
+                        className="mt-1"
+                      />
+                      <div>
+                        <p className="font-display text-base tracking-wide">
+                          {p.label}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.description}
+                        </p>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="punishmentText">Default punishment (optional)</Label>
-                <Textarea
-                  id="punishmentText"
-                  name="punishmentText"
-                  rows={3}
-                  maxLength={500}
-                  placeholder="What befalls the fallen?"
-                />
-              </div>
-            </div>
-            <p className="text-xs italic text-muted-foreground">
-              Members may override these on their own pledges.
-            </p>
+            </fieldset>
+
             <div className="flex justify-end gap-2">
               <Button type="submit" className="gilded font-display tracking-widest">
                 Found Pantheon

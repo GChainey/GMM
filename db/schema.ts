@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   date,
@@ -33,6 +34,18 @@ export const groups = pgTable(
     ownerId: text("owner_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    allowedRewardOptionIds: text("allowed_reward_option_ids")
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
+    allowedPunishmentOptionIds: text("allowed_punishment_option_ids")
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
+    allowCustomReward: boolean("allow_custom_reward").notNull().default(true),
+    allowCustomPunishment: boolean("allow_custom_punishment")
+      .notNull()
+      .default(true),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -74,6 +87,8 @@ export const pledges = pgTable(
     pledgeText: text("pledge_text").notNull().default(""),
     rewardText: text("reward_text").notNull().default(""),
     punishmentText: text("punishment_text").notNull().default(""),
+    rewardOptionId: text("reward_option_id"),
+    punishmentOptionId: text("punishment_option_id"),
     lockedAt: timestamp("locked_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -157,8 +172,38 @@ export const journalEntries = pgTable(
   ],
 );
 
+export const pledgeOptions = pgTable(
+  "pledge_options",
+  {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    slug: text("slug").notNull(),
+    label: text("label").notNull(),
+    description: text("description").notNull().default(""),
+    type: text("type").notNull(),
+    intensity: text("intensity").notNull().default("standard"),
+    isSensitive: boolean("is_sensitive").notNull().default(false),
+    groupId: text("group_id").references(() => groups.id, {
+      onDelete: "cascade",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("pledge_options_group_idx").on(t.groupId)],
+);
+
 export const ACTIVITY_KINDS = ["do", "abstain", "monthly_total"] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
+
+export const PLEDGE_OPTION_TYPES = ["reward", "punishment"] as const;
+export type PledgeOptionType = (typeof PLEDGE_OPTION_TYPES)[number];
+
+export const PLEDGE_OPTION_INTENSITIES = [
+  "mild",
+  "standard",
+  "hardcore",
+] as const;
+export type PledgeOptionIntensity = (typeof PLEDGE_OPTION_INTENSITIES)[number];
 
 export type User = typeof users.$inferSelect;
 export type Group = typeof groups.$inferSelect;
@@ -167,4 +212,5 @@ export type Pledge = typeof pledges.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
 export type DailyCheckin = typeof dailyCheckins.$inferSelect;
 export type JournalEntry = typeof journalEntries.$inferSelect;
+export type PledgeOption = typeof pledgeOptions.$inferSelect;
 
