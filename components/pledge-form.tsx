@@ -27,6 +27,7 @@ interface PledgeFormProps {
   defaultPledgeText: string;
   defaultRewardText: string;
   defaultPunishmentText: string;
+  defaultOutcomeText: string;
   defaultActivities: ActivityDraft[];
 }
 
@@ -47,6 +48,7 @@ export function PledgeForm({
   defaultPledgeText,
   defaultRewardText,
   defaultPunishmentText,
+  defaultOutcomeText,
   defaultActivities,
 }: PledgeFormProps) {
   const initial: ActivityDraft[] =
@@ -138,6 +140,24 @@ export function PledgeForm({
               defaultValue={defaultPledgeText}
               placeholder="Write thy vow in plain words. e.g. 'I solemnly pledge to wake before dawn, run thrice weekly, abstain from sweets, and read each evening for the whole of May.'"
               maxLength={4000}
+            />
+          </div>
+          <div className="grid gap-2 rounded-md border border-gold/40 bg-gold/5 p-3">
+            <Label htmlFor="outcomeText" className="font-display tracking-widest">
+              Month&apos;s end — what thou shalt ship
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              The daily rites lead somewhere. Name the deliverable thou wilt show
+              the pantheon on May 31 — a recital, a release, an exhibition, a
+              demo. Be specific.
+            </p>
+            <Textarea
+              id="outcomeText"
+              name="outcomeText"
+              rows={3}
+              defaultValue={defaultOutcomeText}
+              placeholder="e.g. Hold a Zoom recital with three original songs. Or: open-studio show of 30 drawings. Or: publish a 2,000-word essay."
+              maxLength={1000}
             />
           </div>
           <div className="grid gap-4 md:grid-cols-2">

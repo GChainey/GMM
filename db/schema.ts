@@ -78,6 +78,8 @@ export const pledges = pgTable(
     pledgeText: text("pledge_text").notNull().default(""),
     rewardText: text("reward_text").notNull().default(""),
     punishmentText: text("punishment_text").notNull().default(""),
+    outcomeText: text("outcome_text").notNull().default(""),
+    outcomeAchievedAt: timestamp("outcome_achieved_at", { withTimezone: true }),
     lockedAt: timestamp("locked_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

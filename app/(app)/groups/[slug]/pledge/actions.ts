@@ -28,6 +28,7 @@ const pledgeSchema = z.object({
   pledgeText: z.string().max(4000).default(""),
   rewardText: z.string().max(1000).default(""),
   punishmentText: z.string().max(1000).default(""),
+  outcomeText: z.string().max(1000).default(""),
   activities: z.array(activitySchema).max(20),
 });
 
@@ -48,6 +49,7 @@ export async function savePledgeAction(formData: FormData) {
     pledgeText: String(formData.get("pledgeText") ?? ""),
     rewardText: String(formData.get("rewardText") ?? ""),
     punishmentText: String(formData.get("punishmentText") ?? ""),
+    outcomeText: String(formData.get("outcomeText") ?? ""),
     activities: parsedActivities,
   });
 
@@ -97,6 +99,7 @@ export async function savePledgeAction(formData: FormData) {
         pledgeText: data.pledgeText,
         rewardText: data.rewardText,
         punishmentText: data.punishmentText,
+        outcomeText: data.outcomeText,
       })
       .returning();
   } else {
@@ -106,6 +109,7 @@ export async function savePledgeAction(formData: FormData) {
         pledgeText: data.pledgeText,
         rewardText: data.rewardText,
         punishmentText: data.punishmentText,
+        outcomeText: data.outcomeText,
         updatedAt: new Date(),
       })
       .where(eq(pledges.id, pledge.id));
@@ -161,4 +165,45 @@ export async function savePledgeAction(formData: FormData) {
   revalidatePath(`/dashboard`);
   revalidatePath(`/check-in`);
   redirect(`/groups/${data.slug}`);
+}
+
+const outcomeSchema = z.object({
+  slug: z.string(),
+  shipped: z.boolean(),
+});
+
+export async function markOutcomeShippedAction(input: {
+  slug: string;
+  shipped: boolean;
+}) {
+  const userId = await requireUserId();
+  const data = outcomeSchema.parse(input);
+
+  const [group] = await db
+    .select()
+    .from(groups)
+    .where(eq(groups.slug, data.slug))
+    .limit(1);
+  if (!group) throw new Error("Pantheon not found");
+
+  const [pledge] = await db
+    .select()
+    .from(pledges)
+    .where(and(eq(pledges.userId, userId), eq(pledges.groupId, group.id)))
+    .limit(1);
+  if (!pledge) throw new Error("No pledge to mark.");
+  if (!pledge.outcomeText.trim()) {
+    throw new Error("Inscribe thy month-end outcome first.");
+  }
+
+  await db
+    .update(pledges)
+    .set({
+      outcomeAchievedAt: data.shipped ? new Date() : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(pledges.id, pledge.id));
+
+  revalidatePath(`/groups/${data.slug}`);
+  revalidatePath(`/dashboard`);
 }

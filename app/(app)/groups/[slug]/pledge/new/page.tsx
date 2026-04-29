@@ -56,6 +56,7 @@ export default async function NewPledgePage({
         defaultPledgeText=""
         defaultRewardText={reward ?? ""}
         defaultPunishmentText={punishment ?? ""}
+        defaultOutcomeText=""
         defaultActivities={[
           {
             label: "",

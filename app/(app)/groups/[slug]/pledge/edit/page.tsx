@@ -55,6 +55,7 @@ export default async function EditPledgePage({ params }: EditPledgePageProps) {
         defaultPledgeText={pledge.pledgeText}
         defaultRewardText={pledge.rewardText}
         defaultPunishmentText={pledge.punishmentText}
+        defaultOutcomeText={pledge.outcomeText}
         defaultActivities={acts.map((a) => ({
           id: a.id,
           label: a.label,
