@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-04-29",
+    title: "Visage save restored, gaze made plain",
+    items: [
+      "Saving thy visage no longer angers the server — the artisan's chisel reaches the marble. (A wayward import was summoning React rites in the wrong sanctum.)",
+      "The gaze rail now actually moves the eyes within the face, in all four directions of the compass and their corners — and works at any depth, even None.",
+      "The 3D depth tilt has been re-aligned with the gaze: looking right tips right, looking up tips up, as the gods intended.",
+    ],
+  },
+  {
+    date: "2026-04-29",
     title: "Cloister narrows to icons",
     items: [
       "Sidebar now collapses to a slender column of sigils — press ⌘B and the names retreat, leaving only the icons of Altar, Daily Rite, Pantheons, Visage, and Codex. A pyramid stands watch where the brand once read.",

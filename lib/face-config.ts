@@ -1,4 +1,14 @@
-import { stringHash } from "facehash";
+// Inlined djb2-ish hash: importing `stringHash` from `facehash` pulls in the
+// rest of the package, which calls `React.createContext` at module load and
+// breaks any server action that touches face-config (TypeError on POST).
+function stringHash(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h << 5) - h + str.charCodeAt(i);
+    h &= h;
+  }
+  return Math.abs(h);
+}
 
 export const FACE_COLOR_CLASSES = [
   "bg-amber-500 dark:bg-amber-600",
