@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Camera, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
+import type { FaceCustomization } from "@/lib/face-config";
 import {
   removeAvatarAction,
   uploadAvatarAction,
@@ -13,9 +14,14 @@ import {
 interface AvatarUploaderProps {
   name: string;
   initialAvatarUrl: string | null;
+  customization?: Partial<FaceCustomization>;
 }
 
-export function AvatarUploader({ name, initialAvatarUrl }: AvatarUploaderProps) {
+export function AvatarUploader({
+  name,
+  initialAvatarUrl,
+  customization,
+}: AvatarUploaderProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl);
   const [isUploading, setUploading] = useState(false);
   const [isRemoving, startRemove] = useTransition();
@@ -59,7 +65,12 @@ export function AvatarUploader({ name, initialAvatarUrl }: AvatarUploaderProps) 
 
   return (
     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-      <UserAvatar name={name} src={avatarUrl} size={96} />
+      <UserAvatar
+        name={name}
+        src={avatarUrl}
+        size={96}
+        customization={customization}
+      />
       <div className="flex flex-col gap-2">
         <input
           ref={fileRef}

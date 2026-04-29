@@ -4,6 +4,7 @@ import { users } from "@/db/schema";
 import { ensureUserRow, requireUserId } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AvatarUploader } from "@/components/avatar-uploader";
+import { FaceCustomizer } from "@/components/face-customizer";
 
 export default async function ProfilePage() {
   await ensureUserRow();
@@ -42,6 +43,29 @@ export default async function ProfilePage() {
           <AvatarUploader
             name={user.displayName}
             initialAvatarUrl={user.avatarUrl}
+            customization={{
+              faceStyle: user.faceStyle,
+              faceColor: user.faceColor,
+              faceGaze: user.faceGaze,
+              faceDepth: user.faceDepth,
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="marble-card">
+        <CardHeader>
+          <CardTitle className="font-display text-2xl">Face hash</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FaceCustomizer
+            name={user.displayName}
+            initial={{
+              faceStyle: user.faceStyle,
+              faceColor: user.faceColor,
+              faceGaze: user.faceGaze,
+              faceDepth: user.faceDepth,
+            }}
           />
         </CardContent>
       </Card>

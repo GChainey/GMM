@@ -15,6 +15,13 @@
       "when": 1777440008241,
       "tag": "0001_kinds_and_journal",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777442092110,
+      "tag": "0002_face_customization",
+      "breakpoints": true
     }
   ]
 }
