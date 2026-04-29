@@ -30,8 +30,8 @@ Open <http://localhost:3000>.
 
 | Script | Purpose |
 | --- | --- |
-| `npm run dev` | Local dev server (Turbopack) — auto-picks a free port from 3000 upward, so parallel Conductor workspaces don't collide |
-| `npm run dev:fixed` | Same dev server, but pinned to port 3000 (errors if taken) |
+| `npm run dev` | Local dev server (Turbopack). Honors `$CONDUCTOR_PORT` when set (Conductor pins a stable port per workspace); otherwise auto-picks the first free port from 3000 upward. |
+| `npm run dev:fixed` | Same dev server, pinned to port 3000 (errors if taken) |
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript |

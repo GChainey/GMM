@@ -13,6 +13,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Inscribing a pledge tolls a triple chime. Adding or unbinding a rite earns a brief pop. Each daily check brings a confident tick; tallies inscribe with a gold-leaf shimmer.",
       "Proofs land with a shutter's whisper, and a rite's outcome, once shipped, ascends through three triumphant tones.",
       "Quietly: the rites are pure synthesis — no audio files shipped — and we honour `prefers-reduced-motion`, so any mortal who hath asked for silence shall receive it.",
+      "Quietly: `npm run dev` now binds to `$CONDUCTOR_PORT` when set, so a Conductor cell keeps the same port across runs and never wanders onto another sanctum's gate.",
     ],
   },
   {
