@@ -11,6 +11,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     items: [
       "Sidebar now collapses to a slender column of sigils — press ⌘B and the names retreat, leaving only the icons of Altar, Daily Rite, Pantheons, Visage, and Codex. A pyramid stands watch where the brand once read.",
       "Hovering an icon while collapsed surfaces its title in a small tooltip, so no rite is lost to brevity.",
+      "Quietly: dropped the inset frame around the cloister — it sat oddly against our marble palette. The sidebar now meets the page edge to edge.",
     ],
   },
   {
