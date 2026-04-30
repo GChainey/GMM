@@ -18,6 +18,15 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     date: "2026-04-30",
+    title: "Secrets that survive the worktree",
+    items: [
+      "Conductor workspaces now run a setup rite on first creation: `npm install`, then a symlink from this worktree's `.env.local` to a durable file at `$CONDUCTOR_ROOT_PATH/.env.local` — so secrets edited once persist across every future workspace.",
+      "If the durable file is missing, the rite tries `vercel env pull` to fetch development secrets straight from Vercel; failing that, it prints clear instructions and exits cleanly.",
+      "Every cell hereafter starts a step closer to running — no more re-pasting Neon and Clerk keys after each new workspace.",
+    ],
+  },
+  {
+    date: "2026-04-30",
     title: "The Switching — chaos enters the pantheon",
     items: [
       "Any mortal in a pantheon may now invoke The Switching: name another and offer to swap thy daily goal with theirs, for this day only.",
