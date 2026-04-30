@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { groupMemberships, groups } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
@@ -13,7 +13,7 @@ export default async function GroupsBrowsePage() {
   const publicGroups = await db
     .select()
     .from(groups)
-    .where(eq(groups.isPublic, true))
+    .where(and(eq(groups.isPublic, true), isNull(groups.archivedAt)))
     .orderBy(desc(groups.createdAt))
     .limit(50);
 
@@ -22,6 +22,12 @@ export default async function GroupsBrowsePage() {
     .from(groupMemberships)
     .where(eq(groupMemberships.userId, userId));
   const joinedSet = new Set(myMemberships.map((m) => m.groupId));
+
+  const archivedOwned = await db
+    .select()
+    .from(groups)
+    .where(and(eq(groups.ownerId, userId), isNotNull(groups.archivedAt)))
+    .orderBy(desc(groups.archivedAt));
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10 md:px-10">
@@ -98,6 +104,33 @@ export default async function GroupsBrowsePage() {
             );
           })}
         </div>
+      )}
+
+      {archivedOwned.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-2xl tracking-tight text-muted-foreground">
+            Thy archived pantheons
+          </h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {archivedOwned.map((g) => (
+              <Card key={g.id} className="marble-card border-dashed opacity-80">
+                <CardContent className="flex items-center justify-between gap-3 p-4">
+                  <div className="flex flex-col">
+                    <span className="font-display text-lg tracking-tight">
+                      {g.name}
+                    </span>
+                    <span className="text-xs uppercase tracking-widest text-fallen">
+                      Archived
+                    </span>
+                  </div>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/groups/${g.slug}/settings`}>Manage</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

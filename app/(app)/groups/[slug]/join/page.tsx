@@ -26,6 +26,7 @@ export default async function JoinGroupPage({
     .where(eq(groups.slug, slug))
     .limit(1);
   if (!group) notFound();
+  if (group.archivedAt) notFound();
 
   const showTokenField = !group.isPublic && token !== group.inviteToken;
 
