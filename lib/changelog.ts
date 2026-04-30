@@ -13,6 +13,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Pantheons gain their own dispatch: a roundup card naming who ascends, who stumbles, who was first to seal the day, and which outcomes were shipped. The founder, the latecomer, the diligent — all reckoned together, ready for the public square.",
       "Cards bear the temple's marble and gilt. Save the image for the feed of thy choosing, copy the link for the unfurling preview, or summon the native share sheet on a phone — the parchment knows its way.",
       "Quietly: every share lives at a /share/ path open to the unsigned, so the world may see the rite without first taking the vow.",
+      "Quietly: when the sidebar is furled, the pyramid sigil at its crown now sits flush within its niche — no more clipped corner where padding had crowded the marble.",
     ],
   },
   {
