@@ -80,7 +80,9 @@ export default async function DashboardPage() {
     const status = computeStatus({
       activities: acts.map((a) => ({
         id: a.id,
-        kind: (a.kind as "do" | "abstain" | "monthly_total") ?? "do",
+        kind:
+          (a.kind as "do" | "abstain" | "weekly_tally" | "monthly_total") ??
+          "do",
         targetAmount: a.targetAmount,
         redeemedTargetAmount: a.redeemedTargetAmount,
       })),

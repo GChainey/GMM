@@ -38,10 +38,11 @@ export interface DemoMemberSeed {
 export interface DemoActivitySeed {
   label: string;
   description: string;
-  kind: "do" | "abstain" | "monthly_total";
+  kind: "do" | "abstain" | "weekly_tally" | "monthly_total";
   targetAmount: number | null;
   unit: string | null;
-  // For monthly_total: per-day amount when "completed". For do/abstain: ignored.
+  // For monthly_total: per-day amount when "completed". For do/abstain
+  // and weekly_tally: ignored (a completed weekly_tally checkin counts as 1).
   dailyAmount?: number;
 }
 
@@ -129,11 +130,11 @@ export const DEMO_MEMBERS: DemoMemberSeed[] = [
     completionRate: 0.78,
     activities: [
       {
-        label: "Run or train",
-        description: "",
-        kind: "do",
-        targetAmount: null,
-        unit: null,
+        label: "Run",
+        description: "Track sessions per week — four times suffices.",
+        kind: "weekly_tally",
+        targetAmount: 4,
+        unit: "runs",
       },
       {
         label: "No takeaway",

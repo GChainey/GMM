@@ -17,6 +17,7 @@ import {
   hasChallengeStarted,
   isChallengeOver,
   resolveToday,
+  weekForDate,
 } from "@/lib/dates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -104,6 +105,36 @@ export default async function CheckInPage() {
       monthTotalByActivity.set(
         c.activityId,
         (monthTotalByActivity.get(c.activityId) ?? 0) + c.amount,
+      );
+    }
+  }
+
+  const currentWeek = weekForDate(today);
+  const weeklyActivityIds = userActivities
+    .filter((a) => a.kind === "weekly_tally")
+    .map((a) => a.id);
+  const weeklyCheckins =
+    weeklyActivityIds.length && currentWeek
+      ? await db
+          .select()
+          .from(dailyCheckins)
+          .where(
+            and(
+              eq(dailyCheckins.userId, userId),
+              inArray(dailyCheckins.activityId, weeklyActivityIds),
+            ),
+          )
+      : [];
+
+  const weekDoneByActivity = new Map<string, number>();
+  if (currentWeek) {
+    for (const c of weeklyCheckins) {
+      const cDate = typeof c.date === "string" ? c.date : String(c.date);
+      if (cDate < currentWeek.startIso || cDate > currentWeek.endIso) continue;
+      if (!c.completed) continue;
+      weekDoneByActivity.set(
+        c.activityId,
+        (weekDoneByActivity.get(c.activityId) ?? 0) + 1,
       );
     }
   }
@@ -281,6 +312,7 @@ export default async function CheckInPage() {
                           <span>
                             {r.kind === "abstain" && "✗ "}
                             {r.kind === "monthly_total" && "Σ "}
+                            {r.kind === "weekly_tally" && "≋ "}
                             <span className="font-display tracking-wide">
                               {r.label}
                             </span>
@@ -289,6 +321,13 @@ export default async function CheckInPage() {
                                 {" "}
                                 — target {r.targetAmount}
                                 {r.unit ? ` ${r.unit}` : ""}
+                              </span>
+                            )}
+                            {r.kind === "weekly_tally" && r.targetAmount && (
+                              <span className="text-muted-foreground">
+                                {" "}
+                                — {r.targetAmount}
+                                {r.unit ? ` ${r.unit}` : ""}/week
                               </span>
                             )}
                             {r.description && (
@@ -321,7 +360,11 @@ export default async function CheckInPage() {
                 acts.map((a) => {
                   const c = checkinByActivity.get(a.id);
                   const kind =
-                    (a.kind as "do" | "abstain" | "monthly_total") ?? "do";
+                    (a.kind as
+                      | "do"
+                      | "abstain"
+                      | "weekly_tally"
+                      | "monthly_total") ?? "do";
                   return (
                     <CheckinRow
                       key={a.id}
@@ -337,6 +380,10 @@ export default async function CheckInPage() {
                       unit={a.unit}
                       target={a.redeemedTargetAmount ?? a.targetAmount}
                       monthTotalSoFar={monthTotalByActivity.get(a.id) ?? 0}
+                      weekDoneSoFar={weekDoneByActivity.get(a.id) ?? 0}
+                      weekTarget={a.redeemedTargetAmount ?? a.targetAmount}
+                      weekStartIso={currentWeek?.startIso}
+                      weekEndIso={currentWeek?.endIso}
                     />
                   );
                 })

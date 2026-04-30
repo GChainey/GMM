@@ -317,7 +317,12 @@ export default async function PantheonPage({ params }: PageProps) {
             }));
           const actLite = acts.map((a) => ({
             id: a.id,
-            kind: (a.kind as "do" | "abstain" | "monthly_total") ?? "do",
+            kind:
+              (a.kind as
+                | "do"
+                | "abstain"
+                | "weekly_tally"
+                | "monthly_total") ?? "do",
             targetAmount: a.targetAmount,
             redeemedTargetAmount: a.redeemedTargetAmount,
           }));
@@ -491,7 +496,9 @@ export default async function PantheonPage({ params }: PageProps) {
                               ? "border-fallen/50 bg-fallen/10 text-fallen"
                               : kind === "monthly_total"
                                 ? "border-gold/60 bg-gold/10 text-gold-foreground"
-                                : "border-divine/40 bg-divine/10";
+                                : kind === "weekly_tally"
+                                  ? "border-gold/40 bg-gold/[0.06] text-gold-foreground"
+                                  : "border-divine/40 bg-divine/10";
                           return (
                             <Badge
                               key={a.id}
@@ -500,11 +507,18 @@ export default async function PantheonPage({ params }: PageProps) {
                             >
                               {kind === "abstain" && "✗ "}
                               {kind === "monthly_total" && "Σ "}
+                              {kind === "weekly_tally" && "≋ "}
                               {a.label}
                               {kind === "monthly_total" && a.targetAmount && (
                                 <span className="ml-1 opacity-70">
                                   /{a.redeemedTargetAmount ?? a.targetAmount}
                                   {a.unit ? ` ${a.unit}` : ""}
+                                </span>
+                              )}
+                              {kind === "weekly_tally" && a.targetAmount && (
+                                <span className="ml-1 opacity-70">
+                                  /{a.targetAmount}
+                                  {a.unit ? ` ${a.unit}` : ""} per week
                                 </span>
                               )}
                             </Badge>
@@ -541,6 +555,72 @@ export default async function PantheonPage({ params }: PageProps) {
                                     width: `${(mp.ratio * 100).toFixed(1)}%`,
                                   }}
                                 />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {status.weeklyProgress.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        {Array.from(
+                          new Set(
+                            status.weeklyProgress.map((wp) => wp.activityId),
+                          ),
+                        ).map((activityId) => {
+                          const a = acts.find((x) => x.id === activityId);
+                          if (!a) return null;
+                          const weeks = status.weeklyProgress.filter(
+                            (wp) => wp.activityId === activityId,
+                          );
+                          return (
+                            <div
+                              key={activityId}
+                              className="rounded-md border border-gold/40 bg-gold/[0.04] p-3"
+                            >
+                              <div className="flex items-baseline justify-between gap-3">
+                                <p className="font-display text-sm tracking-tight">
+                                  {a.label}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {a.targetAmount}
+                                  {a.unit ? ` ${a.unit}` : ""} /week
+                                </p>
+                              </div>
+                              <div className="mt-2 grid grid-cols-5 gap-1">
+                                {weeks.map((wp) => {
+                                  const tone = wp.isPast
+                                    ? wp.reached
+                                      ? "bg-ascended/80"
+                                      : "bg-fallen/80"
+                                    : wp.isCurrent
+                                      ? wp.reached
+                                        ? "bg-ascended/70"
+                                        : "bg-gold/70"
+                                      : "bg-muted";
+                                  const width = `${(wp.ratio * 100).toFixed(1)}%`;
+                                  return (
+                                    <div
+                                      key={wp.weekIndex}
+                                      title={`Wk ${wp.weekLabel} (${wp.weekStartIso}–${wp.weekEndIso}) — ${wp.total} / ${wp.target}`}
+                                      className="flex flex-col gap-1"
+                                    >
+                                      <div className="flex items-baseline justify-between text-[0.6rem] uppercase tracking-widest text-muted-foreground">
+                                        <span>Wk {wp.weekLabel}</span>
+                                        <span className="text-foreground">
+                                          {wp.total}/{wp.target}
+                                        </span>
+                                      </div>
+                                      <div className="h-2 overflow-hidden rounded-full bg-border/60">
+                                        <div
+                                          className={`h-full rounded-full transition-[width] ${tone}`}
+                                          style={{ width }}
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           );

@@ -63,7 +63,8 @@ export async function acceptSecondVowAction(input: { slug: string }) {
 
   const actLite: ActivityLite[] = acts.map((a) => ({
     id: a.id,
-    kind: (a.kind as "do" | "abstain" | "monthly_total") ?? "do",
+    kind:
+      (a.kind as "do" | "abstain" | "weekly_tally" | "monthly_total") ?? "do",
     targetAmount: a.targetAmount,
     redeemedTargetAmount: a.redeemedTargetAmount,
   }));

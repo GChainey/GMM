@@ -61,6 +61,43 @@ export function challengeDates(): string[] {
   return dates;
 }
 
+export interface ChallengeWeek {
+  index: number; // 0-based (Wk 1 → 0)
+  label: number; // 1-based (Wk 1 → 1)
+  startIso: string;
+  endIso: string;
+  days: number; // 7 for full weeks, fewer for the partial last week
+  isPartial: boolean;
+}
+
+// Calendar-aligned weeks within May: 1-7, 8-14, 15-21, 22-28, 29-31.
+// Last week is partial (3 days); weekly targets pro-rate accordingly.
+export function challengeWeeks(): ChallengeWeek[] {
+  const weeks: ChallengeWeek[] = [];
+  for (let i = 0; i < 5; i++) {
+    const startDay = i * 7 + 1;
+    const endDay = Math.min(startDay + 6, 31);
+    const days = endDay - startDay + 1;
+    weeks.push({
+      index: i,
+      label: i + 1,
+      startIso: `${CHALLENGE_YEAR}-05-${String(startDay).padStart(2, "0")}`,
+      endIso: `${CHALLENGE_YEAR}-05-${String(endDay).padStart(2, "0")}`,
+      days,
+      isPartial: days < 7,
+    });
+  }
+  return weeks;
+}
+
+export function weekForDate(iso: string): ChallengeWeek | null {
+  if (!isChallengeDate(iso)) return null;
+  for (const w of challengeWeeks()) {
+    if (iso >= w.startIso && iso <= w.endIso) return w;
+  }
+  return null;
+}
+
 export function isChallengeDate(iso: string): boolean {
   return iso >= challengeStartIso() && iso <= challengeEndIso();
 }

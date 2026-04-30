@@ -248,7 +248,12 @@ export const GOAL_SWAP_STATUSES = [
 ] as const;
 export type GoalSwapStatus = (typeof GOAL_SWAP_STATUSES)[number];
 
-export const ACTIVITY_KINDS = ["do", "abstain", "monthly_total"] as const;
+export const ACTIVITY_KINDS = [
+  "do",
+  "abstain",
+  "weekly_tally",
+  "monthly_total",
+] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 
 export const PLEDGE_OPTION_TYPES = ["reward", "punishment"] as const;
