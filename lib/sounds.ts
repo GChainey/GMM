@@ -84,6 +84,45 @@ const SOUNDS = {
       },
     ],
   },
+  switchOffered: {
+    layers: [
+      {
+        source: { type: "triangle", frequency: { start: 440, end: 660 } },
+        envelope: { attack: 0.005, decay: 0.18 },
+        gain: 0.16,
+      },
+      {
+        source: { type: "triangle", frequency: { start: 660, end: 440 } },
+        envelope: { attack: 0.005, decay: 0.18 },
+        gain: 0.14,
+        delay: 0.08,
+      },
+    ],
+    effects: [{ type: "reverb", decay: 0.5, mix: 0.18 }],
+  },
+  switchAccepted: {
+    layers: [
+      {
+        source: { type: "sine", frequency: 523 },
+        envelope: { attack: 0.005, decay: 0.18 },
+        gain: 0.18,
+      },
+      {
+        source: { type: "sine", frequency: 880 },
+        envelope: { attack: 0.005, decay: 0.22 },
+        gain: 0.18,
+        delay: 0.06,
+      },
+      {
+        source: { type: "noise", color: "white" },
+        filter: { type: "bandpass", frequency: 3200, resonance: 1.2 },
+        envelope: { decay: 0.05 },
+        gain: 0.04,
+        delay: 0.12,
+      },
+    ],
+    effects: [{ type: "reverb", decay: 0.7, mix: 0.22 }],
+  },
   outcomeShipped: {
     layers: [
       {

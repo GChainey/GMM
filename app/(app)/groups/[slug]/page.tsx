@@ -5,6 +5,7 @@ import { db } from "@/db";
 import {
   activities,
   dailyCheckins,
+  goalSwaps,
   groupMemberships,
   groups,
   pledgeOptions,
@@ -13,14 +14,20 @@ import {
 } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
 import { buildCells, computeStatus } from "@/lib/status";
-import { challengeDates, resolveToday } from "@/lib/dates";
+import {
+  challengeDates,
+  hasChallengeStarted,
+  isChallengeOver,
+  resolveToday,
+} from "@/lib/dates";
 import { StatusGlyph } from "@/components/status-glyph";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { OutcomeBlock } from "@/components/outcome-block";
-import { Settings } from "lucide-react";
+import { Settings, Shuffle } from "lucide-react";
+import { SwapControls } from "@/components/swap-controls";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -103,6 +110,78 @@ export default async function PantheonPage({ params }: PageProps) {
   const todayIso = await resolveToday("UTC");
   const isOwner = group.ownerId === userId;
   const isMember = myMembership.length > 0;
+
+  const todaySwaps = isMember
+    ? await db
+        .select()
+        .from(goalSwaps)
+        .where(
+          and(
+            eq(goalSwaps.groupId, group.id),
+            eq(goalSwaps.swapDate, todayIso),
+            inArray(goalSwaps.status, ["pending", "accepted"]),
+          ),
+        )
+    : [];
+
+  const userNameById = new Map(memberRows.map((m) => [m.user.id, m.user.displayName]));
+
+  const myPending = todaySwaps
+    .filter(
+      (s) =>
+        s.status === "pending" &&
+        (s.initiatorUserId === userId || s.targetUserId === userId),
+    )
+    .map((s) => ({
+      swapId: s.id,
+      initiatorUserId: s.initiatorUserId,
+      initiatorName: userNameById.get(s.initiatorUserId) ?? "—",
+      targetUserId: s.targetUserId,
+      targetName: userNameById.get(s.targetUserId) ?? "—",
+      amTarget: s.targetUserId === userId,
+    }));
+
+  const myAcceptedSwap = todaySwaps.find(
+    (s) =>
+      s.status === "accepted" &&
+      (s.initiatorUserId === userId || s.targetUserId === userId),
+  );
+  const myActive = myAcceptedSwap
+    ? {
+        swapId: myAcceptedSwap.id,
+        partnerName:
+          userNameById.get(
+            myAcceptedSwap.initiatorUserId === userId
+              ? myAcceptedSwap.targetUserId
+              : myAcceptedSwap.initiatorUserId,
+          ) ?? "another mortal",
+      }
+    : null;
+
+  // Map of "today my partner is X" for every accepted-swap member.
+  const acceptedPartnerByUser = new Map<string, { id: string; name: string }>();
+  for (const s of todaySwaps) {
+    if (s.status !== "accepted") continue;
+    const a = s.initiatorUserId;
+    const b = s.targetUserId;
+    acceptedPartnerByUser.set(a, { id: b, name: userNameById.get(b) ?? "—" });
+    acceptedPartnerByUser.set(b, { id: a, name: userNameById.get(a) ?? "—" });
+  }
+
+  const challengeStarted = hasChallengeStarted(todayIso);
+  const challengeOver = isChallengeOver(todayIso);
+  const swapDisabledReason = !isMember
+    ? "Take the vow to invoke chaos."
+    : !challengeStarted
+      ? "The Switching opens with the ritual on May 1st."
+      : challengeOver
+        ? "The ritual is sealed."
+        : null;
+
+  const candidates = memberRows
+    .filter((m) => m.user.id !== userId)
+    .filter((m) => !acceptedPartnerByUser.has(m.user.id))
+    .map((m) => ({ userId: m.user.id, displayName: m.user.displayName }));
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-10 md:px-10">
@@ -194,6 +273,16 @@ export default async function PantheonPage({ params }: PageProps) {
         </div>
       </header>
 
+      {isMember && (
+        <SwapControls
+          slug={slug}
+          candidates={candidates}
+          pending={myPending}
+          active={myActive}
+          disabledReason={swapDisabledReason}
+        />
+      )}
+
       <div className="flex flex-col gap-6">
         {memberRows.map(({ user, membership }) => {
           const pledge = allPledges.find((p) => p.userId === user.id);
@@ -247,6 +336,13 @@ export default async function PantheonPage({ params }: PageProps) {
                       <p className="text-xs uppercase tracking-widest text-muted-foreground">
                         {membership.role === "owner" ? "FOUNDER" : "MORTAL"}
                       </p>
+                      {acceptedPartnerByUser.has(user.id) && (
+                        <p className="mt-1 inline-flex items-center gap-1 rounded-sm border border-divine/40 bg-divine/10 px-1.5 py-0.5 text-[0.65rem] uppercase tracking-widest text-divine">
+                          <Shuffle className="h-3 w-3" />
+                          Switched today with{" "}
+                          {acceptedPartnerByUser.get(user.id)?.name}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
