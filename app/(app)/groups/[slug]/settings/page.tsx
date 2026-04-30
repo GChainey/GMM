@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { CopyableInput } from "@/components/copyable-input";
 import { CharityModeFields } from "@/components/charity-mode-fields";
+import { PantheonDangerZone } from "@/components/pantheon-danger-zone";
 import type { CharitySelection } from "@/db/schema";
 import {
   addCustomOptionAction,
@@ -52,6 +53,11 @@ export default async function GroupSettingsPage({ params }: SettingsPageProps) {
         <h1 className="mt-2 font-display text-4xl tracking-tight md:text-5xl">
           {group.name}
         </h1>
+        {group.archivedAt && (
+          <p className="mt-3 inline-block rounded-md border border-fallen/40 bg-fallen/10 px-3 py-1 font-display text-xs tracking-widest text-fallen">
+            ARCHIVED
+          </p>
+        )}
       </header>
 
       <Card className="marble-card">
@@ -277,6 +283,25 @@ export default async function GroupSettingsPage({ params }: SettingsPageProps) {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="marble-card border-fallen/40">
+        <CardHeader>
+          <CardTitle className="font-display text-2xl text-fallen">
+            The dissolution
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Archive a pantheon to hide it from sight. Dissolve it to unmake
+            it forever.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <PantheonDangerZone
+            slug={slug}
+            name={group.name}
+            archived={Boolean(group.archivedAt)}
+          />
         </CardContent>
       </Card>
     </div>

@@ -56,6 +56,7 @@ export const groups = pgTable(
     charitySelection: text("charity_selection").notNull().default("individual"),
     charityName: text("charity_name").notNull().default(""),
     charityUrl: text("charity_url").notNull().default(""),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

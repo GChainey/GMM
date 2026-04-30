@@ -154,6 +154,9 @@ export async function joinGroupAction(formData: FormData) {
     .where(eq(groups.slug, slug))
     .limit(1);
   if (!group) throw new Error("Pantheon not found");
+  if (group.archivedAt) {
+    throw new Error("This pantheon has been archived by its founder.");
+  }
 
   if (!group.isPublic && group.inviteToken !== token) {
     throw new Error("This pantheon is sealed. A valid token is required.");
@@ -299,6 +302,61 @@ export async function updateGroupSettingsAction(formData: FormData) {
   revalidatePath(`/groups/${slug}`);
   revalidatePath(`/groups/${slug}/settings`);
   redirect(`/groups/${slug}`);
+}
+
+export async function archiveGroupAction(formData: FormData) {
+  const userId = await requireUserId();
+  const slug = String(formData.get("slug") ?? "");
+  const group = await requireOwnerGroup(slug, userId);
+
+  await db
+    .update(groups)
+    .set({ archivedAt: new Date() })
+    .where(eq(groups.id, group.id));
+
+  revalidatePath("/groups");
+  revalidatePath("/dashboard");
+  revalidatePath(`/groups/${slug}`);
+  revalidatePath(`/groups/${slug}/settings`);
+  redirect("/dashboard");
+}
+
+export async function unarchiveGroupAction(formData: FormData) {
+  const userId = await requireUserId();
+  const slug = String(formData.get("slug") ?? "");
+  const group = await requireOwnerGroup(slug, userId);
+
+  await db
+    .update(groups)
+    .set({ archivedAt: null })
+    .where(eq(groups.id, group.id));
+
+  revalidatePath("/groups");
+  revalidatePath("/dashboard");
+  revalidatePath(`/groups/${slug}`);
+  revalidatePath(`/groups/${slug}/settings`);
+  redirect(`/groups/${slug}/settings`);
+}
+
+export async function deleteGroupAction(formData: FormData) {
+  const userId = await requireUserId();
+  const slug = String(formData.get("slug") ?? "");
+  const confirmName = String(formData.get("confirmName") ?? "").trim();
+  const group = await requireOwnerGroup(slug, userId);
+
+  if (confirmName !== group.name) {
+    throw new Error(
+      "To dissolve a pantheon, retype its name exactly.",
+    );
+  }
+
+  // Cascade FKs handle memberships, pledges, activities, checkins, swaps,
+  // and group-scoped pledge options.
+  await db.delete(groups).where(eq(groups.id, group.id));
+
+  revalidatePath("/groups");
+  revalidatePath("/dashboard");
+  redirect("/dashboard");
 }
 
 const customOptionSchema = z.object({

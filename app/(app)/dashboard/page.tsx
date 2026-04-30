@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import {
   activities,
@@ -33,7 +33,12 @@ export default async function DashboardPage() {
     })
     .from(groupMemberships)
     .innerJoin(groups, eq(groups.id, groupMemberships.groupId))
-    .where(eq(groupMemberships.userId, userId));
+    .where(
+      and(
+        eq(groupMemberships.userId, userId),
+        isNull(groups.archivedAt),
+      ),
+    );
 
   const groupIds = memberships.map((m) => m.groupId);
 

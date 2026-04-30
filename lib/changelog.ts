@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-04-30",
+    title: "Pantheons may now fade from the altar",
+    items: [
+      "The founder of a pantheon may now archive the rite — sealing it from the public square and from every member's altar. Vows and ledger remain intact, awaiting return; the founder may restore the pantheon at any time from its settings.",
+      "Should a pantheon be wholly unworthy of memory — a test, a misfire, a scrap from the workshop — the founder may now dissolve it forever. The name must be retyped to confirm; once dissolved, all bound vows, deeds, tallies, journals and chaos-swaps are unmade with it.",
+      "Archived pantheons appear in a quiet roll on the public square, visible only to their founder, with a single sigil to manage or restore.",
+    ],
+  },
+  {
+    date: "2026-04-30",
     title: "Parchments for the wider world",
     items: [
       "At the close of any day, a mortal may now strike a parchment of their rite — pledge, deeds, tally, proof of rite, and the journal that closed the day, all bound into a single shareable card. A new sigil at the altar reads 'Share today'.",
