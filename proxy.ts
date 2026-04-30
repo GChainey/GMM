@@ -5,6 +5,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks/(.*)",
+  "/share/(.*)",
 ]);
 
 // Renamed from `middleware.ts` (Edge runtime, deprecated in Next 16) to

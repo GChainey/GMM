@@ -32,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { OutcomeBlock } from "@/components/outcome-block";
 import { RedemptionBanner } from "@/components/redemption-banner";
-import { Settings, Shuffle } from "lucide-react";
+import { Settings, Share2, Shuffle } from "lucide-react";
 import { SwapControls } from "@/components/swap-controls";
 
 interface PageProps {
@@ -267,6 +267,18 @@ export default async function PantheonPage({ params }: PageProps) {
               className="font-display tracking-widest"
             >
               <Link href={`/groups/${slug}/pledge/edit`}>Mine own pledge</Link>
+            </Button>
+          )}
+          {challengeStarted && (
+            <Button
+              asChild
+              variant="outline"
+              className="font-display tracking-widest"
+            >
+              <Link href={`/share/group/${slug}/${todayIso}`}>
+                <Share2 className="h-4 w-4" />
+                Share roundup
+              </Link>
             </Button>
           )}
           {isOwner && (

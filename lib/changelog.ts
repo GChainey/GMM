@@ -7,6 +7,16 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-04-30",
+    title: "Parchments for the wider world",
+    items: [
+      "At the close of any day, a mortal may now strike a parchment of their rite — pledge, deeds, tally, proof of rite, and the journal that closed the day, all bound into a single shareable card. A new sigil at the altar reads 'Share today'.",
+      "Pantheons gain their own dispatch: a roundup card naming who ascends, who stumbles, who was first to seal the day, and which outcomes were shipped. The founder, the latecomer, the diligent — all reckoned together, ready for the public square.",
+      "Cards bear the temple's marble and gilt. Save the image for the feed of thy choosing, copy the link for the unfurling preview, or summon the native share sheet on a phone — the parchment knows its way.",
+      "Quietly: every share lives at a /share/ path open to the unsigned, so the world may see the rite without first taking the vow.",
+    ],
+  },
+  {
+    date: "2026-04-30",
     title: "The second vow — a path of redemption",
     items: [
       "A fallen mortal is no longer condemned by the first stumble. The temple now offers a single dusk — three days from the fall — to take the second vow and re-enter ascension as the penitent.",
