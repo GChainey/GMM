@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckinRow } from "@/components/checkin-row";
 import { JournalEntry } from "@/components/journal-entry";
-import { Shuffle } from "lucide-react";
+import { Share2, Shuffle } from "lucide-react";
 
 export default async function CheckInPage() {
   const userId = await requireUserId();
@@ -200,24 +200,38 @@ export default async function CheckInPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-10 md:px-10">
-      <header>
-        <p className="font-display text-xs tracking-[0.4em] text-muted-foreground">
-          DAILY RITE
-        </p>
-        <h1 className="mt-2 font-display text-4xl tracking-tight md:text-5xl">
-          {!started
-            ? "The ritual has not yet begun"
-            : over
-              ? "The ritual is complete"
-              : `Today — ${today}`}
-        </h1>
-        <p className="mt-2 max-w-xl text-muted-foreground">
-          {!started
-            ? `Daily rites unlock at midnight UTC on ${challengeStartIso()}.`
-            : over
-              ? "Thy fate is sealed. Visit thy pantheons to see who ascended."
-              : "Mark each rite as it is performed. Photo proof is welcomed."}
-        </p>
+      <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="font-display text-xs tracking-[0.4em] text-muted-foreground">
+            DAILY RITE
+          </p>
+          <h1 className="mt-2 font-display text-4xl tracking-tight md:text-5xl">
+            {!started
+              ? "The ritual has not yet begun"
+              : over
+                ? "The ritual is complete"
+                : `Today — ${today}`}
+          </h1>
+          <p className="mt-2 max-w-xl text-muted-foreground">
+            {!started
+              ? `Daily rites unlock at midnight UTC on ${challengeStartIso()}.`
+              : over
+                ? "Thy fate is sealed. Visit thy pantheons to see who ascended."
+                : "Mark each rite as it is performed. Photo proof is welcomed."}
+          </p>
+        </div>
+        {started && groupedByPledge.length > 0 && (
+          <Button
+            asChild
+            variant="outline"
+            className="font-display tracking-widest"
+          >
+            <Link href={`/share/daily/${userId}/${today}`}>
+              <Share2 className="h-4 w-4" />
+              Share today
+            </Link>
+          </Button>
+        )}
       </header>
 
       {groupedByPledge.length === 0 || userActivities.length === 0 ? (
