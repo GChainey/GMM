@@ -133,7 +133,8 @@ export async function getPersonalDailyShareData(
   }));
   const actLite = acts.map((a) => ({
     id: a.id,
-    kind: (a.kind as "do" | "abstain" | "monthly_total") ?? "do",
+    kind:
+      (a.kind as "do" | "abstain" | "weekly_tally" | "monthly_total") ?? "do",
     targetAmount: a.targetAmount,
     redeemedTargetAmount: a.redeemedTargetAmount,
   }));
@@ -271,7 +272,8 @@ export async function getGroupRoundupShareData(
       }));
     const actLite = acts.map((a) => ({
       id: a.id,
-      kind: (a.kind as "do" | "abstain" | "monthly_total") ?? "do",
+      kind:
+      (a.kind as "do" | "abstain" | "weekly_tally" | "monthly_total") ?? "do",
       targetAmount: a.targetAmount,
       redeemedTargetAmount: a.redeemedTargetAmount,
     }));

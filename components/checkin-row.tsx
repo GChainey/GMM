@@ -15,7 +15,7 @@ import {
 import { useSounds } from "@/hooks/use-sounds";
 import { cn } from "@/lib/utils";
 
-type Kind = "do" | "abstain" | "monthly_total";
+type Kind = "do" | "abstain" | "weekly_tally" | "monthly_total";
 
 interface CheckinRowProps {
   activityId: string;
@@ -31,11 +31,19 @@ interface CheckinRowProps {
   unit?: string | null;
   target?: number | null;
   monthTotalSoFar?: number;
+  // Only meaningful for weekly_tally
+  weekDoneSoFar?: number;
+  weekTarget?: number | null;
+  weekStartIso?: string;
+  weekEndIso?: string;
 }
 
 export function CheckinRow(props: CheckinRowProps) {
   if (props.kind === "monthly_total") {
     return <MonthlyTallyRow {...props} />;
+  }
+  if (props.kind === "weekly_tally") {
+    return <WeeklyTallyRow {...props} />;
   }
   return <DailyToggleRow {...props} />;
 }
@@ -151,6 +159,189 @@ function DailyToggleRow({
             <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/30">
               <ImageIcon className="h-4 w-4 text-white opacity-0 transition group-hover:opacity-100" />
             </span>
+          </a>
+        )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onFile}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isUploading}
+          onClick={() => fileRef.current?.click()}
+          className="font-display tracking-widest"
+        >
+          <Camera className="mr-2 h-4 w-4" />
+          {isUploading ? "Inscribing…" : photoUrl ? "Replace" : "Proof"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function WeeklyTallyRow({
+  activityId,
+  label,
+  description,
+  groupName,
+  date,
+  initialCompleted,
+  initialPhotoUrl,
+  unit,
+  weekDoneSoFar = 0,
+  weekTarget,
+  weekStartIso,
+  weekEndIso,
+}: CheckinRowProps) {
+  const [completed, setCompleted] = useState(initialCompleted);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl);
+  const [isPending, startTransition] = useTransition();
+  const [isUploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const playSound = useSounds();
+
+  const baseDone = Math.max(0, weekDoneSoFar - (initialCompleted ? 1 : 0));
+  const previewDone = baseDone + (completed ? 1 : 0);
+  const goal = weekTarget ?? 0;
+  const ratio = goal > 0 ? Math.min(1, previewDone / goal) : 0;
+  const unitLabel = unit ?? "";
+
+  function toggle(next: boolean) {
+    setCompleted(next);
+    startTransition(async () => {
+      try {
+        await toggleCheckinAction({ activityId, date, completed: next });
+        playSound(next ? "tallyInscribed" : "riteUnchecked");
+      } catch (err) {
+        setCompleted(!next);
+        const msg = err instanceof Error ? err.message : "Could not save";
+        toast.error(msg);
+      }
+    });
+  }
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("That image is over 8 MB. Try a smaller one.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.set("activityId", activityId);
+      fd.set("date", date);
+      fd.set("file", file);
+      const result = await uploadProofAction(fd);
+      setPhotoUrl(result.url);
+      setCompleted(true);
+      playSound("proofInscribed");
+      toast.success("Proof inscribed");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      toast.error(msg);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  const weekRange =
+    weekStartIso && weekEndIso ? `${weekStartIso} → ${weekEndIso}` : "this week";
+
+  return (
+    <div className="flex flex-col gap-3 rounded-md border border-gold/40 bg-gold/[0.04] p-4">
+      <div className="flex flex-col gap-1">
+        <p className="text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
+          Weekly tally
+        </p>
+        <p className="font-display text-lg leading-tight">{label}</p>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )}
+        <p className="text-xs uppercase tracking-widest text-muted-foreground">
+          {groupName}
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-md border border-border/50 bg-background/40 p-3">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
+              This week ({weekRange})
+            </p>
+            <p className="font-display text-2xl leading-none">
+              {previewDone}
+              {unitLabel && (
+                <span className="ml-1 text-sm text-muted-foreground">
+                  {unitLabel}
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
+              Target
+            </p>
+            <p className="font-display text-lg">
+              {goal}
+              {unitLabel && (
+                <span className="ml-1 text-sm text-muted-foreground">
+                  {unitLabel}
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-border/60">
+          <div
+            className="h-full rounded-full bg-gold transition-[width]"
+            style={{ width: `${(ratio * 100).toFixed(1)}%` }}
+          />
+        </div>
+      </div>
+
+      <label className="flex flex-1 items-start gap-3">
+        <Checkbox
+          checked={completed}
+          disabled={isPending}
+          onCheckedChange={(v) => toggle(v === true)}
+          className="mt-1 h-5 w-5"
+          aria-label={`Did this today — ${label}`}
+        />
+        <div className="flex flex-col gap-1">
+          <p className="font-display text-sm tracking-tight">
+            {completed ? "Logged today" : "Mark today"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Each day thou performest the rite, mark it. The week&apos;s tally
+            climbs by one.
+          </p>
+        </div>
+      </label>
+
+      <div className="flex items-center gap-2">
+        {photoUrl && (
+          <a
+            href={photoUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="relative h-10 w-10 overflow-hidden rounded-md border border-gold/40"
+          >
+            <Image
+              src={photoUrl}
+              alt="proof"
+              fill
+              sizes="40px"
+              className="object-cover"
+              unoptimized
+            />
           </a>
         )}
         <input

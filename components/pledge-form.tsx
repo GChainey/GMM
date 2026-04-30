@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useSounds } from "@/hooks/use-sounds";
 import { cn } from "@/lib/utils";
 
-type ActivityKind = "do" | "abstain" | "monthly_total";
+type ActivityKind = "do" | "abstain" | "weekly_tally" | "monthly_total";
 
 interface ActivityDraft {
   id?: string;
@@ -59,12 +59,14 @@ interface PledgeFormProps {
 const KIND_LABEL: Record<ActivityKind, string> = {
   do: "Do daily",
   abstain: "Abstain daily",
+  weekly_tally: "Weekly tally",
   monthly_total: "Monthly tally",
 };
 
 const KIND_TONE: Record<ActivityKind, string> = {
   do: "border-divine/40 bg-divine/5",
   abstain: "border-fallen/40 bg-fallen/5",
+  weekly_tally: "border-gold/40 bg-gold/[0.04]",
   monthly_total: "border-gold/50 bg-gold/5",
 };
 
@@ -162,10 +164,14 @@ export function PledgeForm({
       const kind: ActivityKind = a.kind;
       let targetAmount: number | null = null;
       let unit: string | null = null;
-      if (kind === "monthly_total") {
+      if (kind === "monthly_total" || kind === "weekly_tally") {
         const parsed = Number(a.targetAmount);
         if (!Number.isFinite(parsed) || parsed <= 0) {
-          toast.error(`"${label}" needs a positive monthly target.`);
+          toast.error(
+            kind === "weekly_tally"
+              ? `"${label}" needs a positive weekly target.`
+              : `"${label}" needs a positive monthly target.`,
+          );
           return;
         }
         targetAmount = Math.round(parsed);
@@ -355,10 +361,10 @@ export function PledgeForm({
         <CardHeader>
           <CardTitle className="font-display text-2xl">Rites & Tallies</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Three kinds of vow. Each rite leads to an outcome — name what thou
+            Four kinds of vow. Each rite leads to an outcome — name what thou
             shalt ship on May 31.
           </p>
-          <ul className="mt-2 grid gap-1 text-xs text-muted-foreground md:grid-cols-3">
+          <ul className="mt-2 grid gap-1 text-xs text-muted-foreground md:grid-cols-2">
             <li>
               <span className="font-display tracking-widest text-foreground">
                 Do daily
@@ -370,6 +376,12 @@ export function PledgeForm({
                 Abstain daily
               </span>{" "}
               — refrain every day of May.
+            </li>
+            <li>
+              <span className="font-display tracking-widest text-foreground">
+                Weekly tally
+              </span>{" "}
+              — meet a target each week (e.g. 4 runs a week).
             </li>
             <li>
               <span className="font-display tracking-widest text-foreground">
@@ -415,7 +427,9 @@ export function PledgeForm({
                         ? "e.g. No alcohol"
                         : a.kind === "monthly_total"
                           ? "e.g. Total kilometres run"
-                          : "e.g. Morning gym session"
+                          : a.kind === "weekly_tally"
+                            ? "e.g. Run"
+                            : "e.g. Morning gym session"
                     }
                     required
                     maxLength={120}
@@ -428,7 +442,7 @@ export function PledgeForm({
                   placeholder="Optional detail or boundary"
                   maxLength={500}
                 />
-                {a.kind === "monthly_total" && (
+                {(a.kind === "monthly_total" || a.kind === "weekly_tally") && (
                   <div className="grid gap-2 md:grid-cols-[1fr_1fr]">
                     <Input
                       type="number"
@@ -439,13 +453,21 @@ export function PledgeForm({
                       onChange={(e) =>
                         update(i, { targetAmount: e.target.value })
                       }
-                      placeholder="Target (e.g. 75)"
+                      placeholder={
+                        a.kind === "weekly_tally"
+                          ? "Target per week (e.g. 4)"
+                          : "Target (e.g. 75)"
+                      }
                       required
                     />
                     <Input
                       value={a.unit}
                       onChange={(e) => update(i, { unit: e.target.value })}
-                      placeholder="Unit (e.g. km, pages, reps)"
+                      placeholder={
+                        a.kind === "weekly_tally"
+                          ? "Unit (e.g. runs, sessions, km)"
+                          : "Unit (e.g. km, pages, reps)"
+                      }
                       maxLength={24}
                     />
                   </div>
@@ -465,7 +487,9 @@ export function PledgeForm({
                         ? "e.g. 30-day clear-headed journal published"
                         : a.kind === "monthly_total"
                           ? "e.g. A logged 75-km route map"
-                          : "e.g. A Zoom recital with three original songs"
+                          : a.kind === "weekly_tally"
+                            ? "e.g. A timed 5k race entered on May 30"
+                            : "e.g. A Zoom recital with three original songs"
                     }
                     maxLength={1000}
                   />

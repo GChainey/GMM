@@ -20,7 +20,9 @@ const activitySchema = z
     id: z.string().optional(),
     label: z.string().min(1).max(120),
     description: z.string().max(500).default(""),
-    kind: z.enum(["do", "abstain", "monthly_total"]).default("do"),
+    kind: z
+      .enum(["do", "abstain", "weekly_tally", "monthly_total"])
+      .default("do"),
     targetAmount: z.number().int().positive().nullable().default(null),
     unit: z.string().max(24).nullable().default(null),
     outcomeText: z.string().max(1000).default(""),
@@ -28,6 +30,10 @@ const activitySchema = z
   .refine(
     (a) => a.kind !== "monthly_total" || (a.targetAmount ?? 0) > 0,
     { message: "Monthly tallies need a positive target." },
+  )
+  .refine(
+    (a) => a.kind !== "weekly_tally" || (a.targetAmount ?? 0) > 0,
+    { message: "Weekly tallies need a positive target." },
   );
 
 const pledgeSchema = z.object({

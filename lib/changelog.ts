@@ -7,6 +7,17 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-04-30",
+    title: "A new vow — the weekly tally",
+    items: [
+      "A fourth kind of rite joins the canon: the weekly tally. Where the daily rite asks every dawn and the monthly tally counts to a single horizon, the weekly tally measures the rhythm — four runs a week, three sessions, two pages of correspondence — and is reckoned anew each Sunday eve.",
+      "Mark thee a target per week. May is divided into five weeks (1–7, 8–14, 15–21, 22–28, 29–31); the partial last week is pro-rated, that the brevity of three days shall not condemn thee to a full week's quota.",
+      "At the close of each week, should thy tally fall short of the target, thou art counted fallen — and the dusk for the second vow opens at once, that thou mayst climb back whilst there is still light.",
+      "Thy pantheon-mates see the weekly cadence as a small mosaic of five — green where the week was met, crimson where it was not, gold where it yet may be.",
+      "On the daily altar, weekly rites surface as a single mark each day, and the tally for this week climbs at every check.",
+    ],
+  },
+  {
+    date: "2026-04-30",
     title: "Pantheons may now fade from the altar",
     items: [
       "The founder of a pantheon may now archive the rite — sealing it from the public square and from every member's altar. Vows and ledger remain intact, awaiting return; the founder may restore the pantheon at any time from its settings.",

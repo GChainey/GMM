@@ -68,7 +68,8 @@ export default async function RedemptionPage({ params }: PageProps) {
   const todayIso = await resolveToday("UTC");
   const actLite: ActivityLite[] = acts.map((a) => ({
     id: a.id,
-    kind: (a.kind as "do" | "abstain" | "monthly_total") ?? "do",
+    kind:
+      (a.kind as "do" | "abstain" | "weekly_tally" | "monthly_total") ?? "do",
     targetAmount: a.targetAmount,
     redeemedTargetAmount: a.redeemedTargetAmount,
   }));
@@ -120,6 +121,8 @@ export default async function RedemptionPage({ params }: PageProps) {
   const dailyRites = acts.filter(
     (a) => a.kind === "do" || a.kind === "abstain",
   );
+
+  const weeklyTallies = acts.filter((a) => a.kind === "weekly_tally");
 
   const fallenOn = status.fallenOn;
   const deadline = fallenOn ? redemptionDeadline(fallenOn) : null;
@@ -195,6 +198,27 @@ export default async function RedemptionPage({ params }: PageProps) {
                     <li key={a.id}>
                       {a.kind === "abstain" ? "Abstain — " : ""}
                       {a.label}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {weeklyTallies.length > 0 && (
+              <section className="flex flex-col gap-2">
+                <p className="font-display text-sm tracking-tight">
+                  Weekly tallies — every week must hold
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  The penitent are granted no slack on the weekly cadence: each
+                  remaining week must reach its full target. A single missed
+                  week ends the path.
+                </p>
+                <ul className="ml-5 list-disc text-sm">
+                  {weeklyTallies.map((a) => (
+                    <li key={a.id}>
+                      {a.label} — {a.targetAmount}
+                      {a.unit ? ` ${a.unit}` : ""} per week
                     </li>
                   ))}
                 </ul>

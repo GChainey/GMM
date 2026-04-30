@@ -2,7 +2,9 @@ import {
   challengeDates,
   challengeDayNumber,
   challengeEndIso,
+  challengeWeeks,
   hasChallengeStarted,
+  weekForDate,
 } from "./dates";
 import type { ActivityKind } from "@/db/schema";
 
@@ -45,6 +47,7 @@ export interface ComputedStatus {
   longestStreak: number;
   todayIso: string;
   monthlyProgress: MonthlyProgress[];
+  weeklyProgress: WeeklyProgress[];
   fallenOn: string | null;
   reclaimed: boolean;
   effectiveStrikeLimit: number;
@@ -59,6 +62,20 @@ export interface MonthlyProgress {
   reached: boolean;
 }
 
+export interface WeeklyProgress {
+  activityId: string;
+  weekIndex: number;
+  weekLabel: number;
+  weekStartIso: string;
+  weekEndIso: string;
+  total: number;
+  target: number;
+  ratio: number;
+  reached: boolean;
+  isCurrent: boolean;
+  isPast: boolean;
+}
+
 export const REDEMPTION_WINDOW_DAYS = 3;
 const TALLY_FALL_TRIGGER_MIN_DAY = 7;
 const TALLY_FALL_TRIGGER_THRESHOLD = 0.5;
@@ -66,6 +83,20 @@ const TALLY_FALL_TRIGGER_THRESHOLD = 0.5;
 function effectiveTargetFor(a: ActivityLite): number {
   if (a.kind !== "monthly_total") return 0;
   return a.redeemedTargetAmount ?? a.targetAmount ?? 0;
+}
+
+function weeklyBaseTargetFor(a: ActivityLite): number {
+  if (a.kind !== "weekly_tally") return 0;
+  return a.redeemedTargetAmount ?? a.targetAmount ?? 0;
+}
+
+// Pro-rate the weekly target for partial weeks at the month edge so a 3-day
+// final week is not held to a full 7-day quota.
+function weeklyTargetForWeek(a: ActivityLite, days: number): number {
+  const base = weeklyBaseTargetFor(a);
+  if (base <= 0) return 0;
+  if (days >= 7) return base;
+  return Math.max(1, Math.ceil((base * days) / 7));
 }
 
 export function addDaysIso(iso: string, days: number): string {
@@ -105,6 +136,10 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
   const monthlyActivities = activities.filter(
     (a) => a.kind === "monthly_total",
   );
+  const weeklyActivities = activities.filter(
+    (a) => a.kind === "weekly_tally",
+  );
+  const weeks = challengeWeeks();
 
   const isRedeemed = Boolean(redemptionStartedOn);
   const effectiveStrikeLimit = redeemedStrikeLimit ?? strikeLimit;
@@ -114,18 +149,41 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
     completedLookup.set(`${c.activityId}::${c.date}`, c.completed);
   }
 
+  const tallyKey = (activityId: string) => activityId;
+
   const dailyAmountByActivity = new Map<string, Map<string, number>>();
   for (const a of monthlyActivities) {
-    dailyAmountByActivity.set(a.id, new Map());
+    dailyAmountByActivity.set(tallyKey(a.id), new Map());
+  }
+  for (const a of weeklyActivities) {
+    dailyAmountByActivity.set(tallyKey(a.id), new Map());
   }
   for (const c of checkins) {
-    if (typeof c.amount !== "number") continue;
     const m = dailyAmountByActivity.get(c.activityId);
     if (!m) continue;
-    m.set(c.date, (m.get(c.date) ?? 0) + c.amount);
+    // Weekly tallies count each completed=true day as 1 if no explicit amount;
+    // monthly tallies require an explicit amount.
+    const inc =
+      typeof c.amount === "number"
+        ? c.amount
+        : c.completed
+          ? weeklyActivities.some((wa) => wa.id === c.activityId)
+            ? 1
+            : 0
+          : 0;
+    if (inc === 0 && (typeof c.amount !== "number")) continue;
+    m.set(c.date, (m.get(c.date) ?? 0) + inc);
   }
   const runningTotals = new Map<string, number>();
   for (const a of monthlyActivities) runningTotals.set(a.id, 0);
+
+  // Per-week running totals for weekly tallies, keyed `${activityId}::${weekIndex}`.
+  const weeklyTotals = new Map<string, number>();
+  const weeklyKey = (activityId: string, weekIndex: number) =>
+    `${activityId}::${weekIndex}`;
+  for (const a of weeklyActivities) {
+    for (const w of weeks) weeklyTotals.set(weeklyKey(a.id, w.index), 0);
+  }
 
   const totalSlots = dailyActivities.length * dates.length;
   let evaluatedSlots = 0;
@@ -159,6 +217,14 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
       const dayAmount = dailyAmountByActivity.get(a.id)?.get(date) ?? 0;
       runningTotals.set(a.id, (runningTotals.get(a.id) ?? 0) + dayAmount);
     }
+    const week = weekForDate(date);
+    if (week) {
+      for (const a of weeklyActivities) {
+        const dayAmount = dailyAmountByActivity.get(a.id)?.get(date) ?? 0;
+        const k = weeklyKey(a.id, week.index);
+        weeklyTotals.set(k, (weeklyTotals.get(k) ?? 0) + dayAmount);
+      }
+    }
 
     if (fallenOn === null) {
       if (strikes > effectiveStrikeLimit) {
@@ -182,6 +248,21 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
           }
         }
       }
+      // End-of-week trigger for weekly tallies: when a week closes (today is
+      // its final day) and the user fell short of the week's target, the path
+      // is broken. We only check when we're actually past or on the week's
+      // final day so the week is fully decided.
+      if (fallenOn === null && week && date === week.endIso) {
+        for (const a of weeklyActivities) {
+          const target = weeklyTargetForWeek(a, week.days);
+          if (target <= 0) continue;
+          const totalSoFar = weeklyTotals.get(weeklyKey(a.id, week.index)) ?? 0;
+          if (totalSoFar < target) {
+            fallenOn = date;
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -198,6 +279,30 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
     };
   });
 
+  const weeklyProgress: WeeklyProgress[] = [];
+  for (const a of weeklyActivities) {
+    for (const w of weeks) {
+      const total = weeklyTotals.get(weeklyKey(a.id, w.index)) ?? 0;
+      const target = weeklyTargetForWeek(a, w.days);
+      const ratio = target > 0 ? Math.min(1, total / target) : 0;
+      const isCurrent = todayIso >= w.startIso && todayIso <= w.endIso;
+      const isPast = todayIso > w.endIso;
+      weeklyProgress.push({
+        activityId: a.id,
+        weekIndex: w.index,
+        weekLabel: w.label,
+        weekStartIso: w.startIso,
+        weekEndIso: w.endIso,
+        total,
+        target,
+        ratio,
+        reached: target > 0 && total >= target,
+        isCurrent,
+        isPast,
+      });
+    }
+  }
+
   if (!hasChallengeStarted(todayIso)) {
     return {
       status: "pending",
@@ -208,6 +313,7 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
       longestStreak: 0,
       todayIso,
       monthlyProgress,
+      weeklyProgress,
       fallenOn: null,
       reclaimed: false,
       effectiveStrikeLimit,
@@ -219,8 +325,12 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
     todayIso > endIso &&
     monthlyActivities.length > 0 &&
     monthlyProgress.some((p) => !p.reached);
+  const weeklyFailedAtEnd =
+    todayIso > endIso &&
+    weeklyActivities.length > 0 &&
+    weeklyProgress.some((p) => p.target > 0 && !p.reached);
 
-  if (fallenOn !== null || monthlyFailedAtEnd) {
+  if (fallenOn !== null || monthlyFailedAtEnd || weeklyFailedAtEnd) {
     return {
       status: "fallen",
       strikes,
@@ -230,6 +340,7 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
       longestStreak,
       todayIso,
       monthlyProgress,
+      weeklyProgress,
       fallenOn: fallenOn ?? endIso,
       reclaimed: false,
       effectiveStrikeLimit,
@@ -247,6 +358,7 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
       longestStreak,
       todayIso,
       monthlyProgress,
+      weeklyProgress,
       fallenOn: null,
       reclaimed: isRedeemed,
       effectiveStrikeLimit,
@@ -263,6 +375,7 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
     longestStreak,
     todayIso,
     monthlyProgress,
+    weeklyProgress,
     fallenOn: null,
     reclaimed: false,
     effectiveStrikeLimit,
