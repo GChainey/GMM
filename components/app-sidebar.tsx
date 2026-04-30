@@ -44,7 +44,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              className="p-1.5! group-data-[collapsible=icon]:p-0!"
               tooltip="God Mode May"
               render={<Link href="/dashboard" />}
             >
