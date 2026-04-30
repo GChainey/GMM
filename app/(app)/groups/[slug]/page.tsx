@@ -13,7 +13,12 @@ import {
   users,
 } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
-import { buildCells, computeStatus } from "@/lib/status";
+import {
+  buildCells,
+  canSeekRedemption,
+  computeStatus,
+  redemptionDeadline,
+} from "@/lib/status";
 import {
   challengeDates,
   hasChallengeStarted,
@@ -26,6 +31,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { OutcomeBlock } from "@/components/outcome-block";
+import { RedemptionBanner } from "@/components/redemption-banner";
 import { Settings, Shuffle } from "lucide-react";
 import { SwapControls } from "@/components/swap-controls";
 
@@ -301,14 +307,27 @@ export default async function PantheonPage({ params }: PageProps) {
             id: a.id,
             kind: (a.kind as "do" | "abstain" | "monthly_total") ?? "do",
             targetAmount: a.targetAmount,
+            redeemedTargetAmount: a.redeemedTargetAmount,
           }));
           const status = computeStatus({
             activities: actLite,
             checkins: checks,
             strikeLimit: group.strikeLimit,
             todayIso,
+            redemptionStartedOn: pledge?.redemptionStartedOn ?? null,
+            redeemedStrikeLimit: pledge?.redeemedStrikeLimit ?? null,
           });
           const cells = buildCells(actLite, checks, todayIso);
+          const isMe = user.id === userId;
+          const showRedemptionBanner = isMe && canSeekRedemption(status);
+          const banner = showRedemptionBanner ? (() => {
+            const deadline = redemptionDeadline(status.fallenOn ?? todayIso);
+            const ms =
+              new Date(`${deadline}T00:00:00Z`).getTime() -
+              new Date(`${todayIso}T00:00:00Z`).getTime();
+            const daysLeft = Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+            return <RedemptionBanner slug={slug} daysLeft={daysLeft} />;
+          })() : null;
 
           return (
             <Card
@@ -316,6 +335,7 @@ export default async function PantheonPage({ params }: PageProps) {
               className="marble-card overflow-hidden border-border/60"
             >
               <CardContent className="flex flex-col gap-4 p-6">
+                {banner}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <UserAvatar
@@ -343,10 +363,19 @@ export default async function PantheonPage({ params }: PageProps) {
                           {acceptedPartnerByUser.get(user.id)?.name}
                         </p>
                       )}
+                      {status.isRedeemed && status.status === "penitent" && (
+                        <p className="mt-1 inline-flex items-center gap-1 rounded-sm border border-penitent/40 bg-penitent/10 px-1.5 py-0.5 text-[0.65rem] uppercase tracking-widest text-penitent">
+                          The second vow · since{" "}
+                          {pledge?.redemptionStartedOn ?? "—"}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <StatusGlyph status={status.status} />
+                    <StatusGlyph
+                      status={status.status}
+                      reclaimed={status.reclaimed}
+                    />
                     <p className="text-xs text-muted-foreground">
                       {status.strikes} strike{status.strikes === 1 ? "" : "s"} ·
                       🔥 {status.currentStreak} day
@@ -462,7 +491,7 @@ export default async function PantheonPage({ params }: PageProps) {
                               {a.label}
                               {kind === "monthly_total" && a.targetAmount && (
                                 <span className="ml-1 opacity-70">
-                                  /{a.targetAmount}
+                                  /{a.redeemedTargetAmount ?? a.targetAmount}
                                   {a.unit ? ` ${a.unit}` : ""}
                                 </span>
                               )}

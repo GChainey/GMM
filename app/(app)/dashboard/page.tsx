@@ -77,6 +77,7 @@ export default async function DashboardPage() {
         id: a.id,
         kind: (a.kind as "do" | "abstain" | "monthly_total") ?? "do",
         targetAmount: a.targetAmount,
+        redeemedTargetAmount: a.redeemedTargetAmount,
       })),
       checkins: checks.map((c) => ({
         activityId: c.activityId,
@@ -86,6 +87,8 @@ export default async function DashboardPage() {
       })),
       strikeLimit: m.group.strikeLimit,
       todayIso,
+      redemptionStartedOn: pledge?.redemptionStartedOn ?? null,
+      redeemedStrikeLimit: pledge?.redeemedStrikeLimit ?? null,
     });
     return { membership: m, pledge, activities: acts, status };
   });
@@ -175,7 +178,10 @@ export default async function DashboardPage() {
                           : `${membership.group.strikeLimit} strikes allowed`}
                       </p>
                     </div>
-                    <StatusGlyph status={status.status} />
+                    <StatusGlyph
+                      status={status.status}
+                      reclaimed={status.reclaimed}
+                    />
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">

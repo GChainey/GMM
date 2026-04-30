@@ -4,13 +4,32 @@ import { revalidatePath } from "next/cache";
 import { and, eq, inArray, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { goalSwaps, groupMemberships, groups } from "@/db/schema";
+import { goalSwaps, groupMemberships, groups, pledges } from "@/db/schema";
 import { ensureUserRow, requireUserId } from "@/lib/auth";
 import {
   hasChallengeStarted,
   isChallengeOver,
   resolveToday,
 } from "@/lib/dates";
+
+async function assertNeitherIsPenitent(
+  groupId: string,
+  userIds: string[],
+) {
+  const rows = await db
+    .select({ userId: pledges.userId, redeemed: pledges.redemptionAcceptedAt })
+    .from(pledges)
+    .where(
+      and(eq(pledges.groupId, groupId), inArray(pledges.userId, userIds)),
+    );
+  for (const r of rows) {
+    if (r.redeemed) {
+      throw new Error(
+        "The penitent walk a sealed path — the Switching is closed to them.",
+      );
+    }
+  }
+}
 
 const proposeSchema = z.object({
   slug: z.string().min(1),
@@ -80,6 +99,8 @@ export async function proposeSwitchAction(input: {
   if (!targetMembership) {
     throw new Error("That mortal walks not in this pantheon.");
   }
+
+  await assertNeitherIsPenitent(group.id, [userId, data.targetUserId]);
 
   // Either side may already be switched (accepted) for today — block it.
   // Either side may have a pending offer with the same partner — block dupes.
@@ -157,6 +178,11 @@ export async function acceptSwitchAction(input: { swapId: string }) {
   if (swap.swapDate !== today) {
     throw new Error("This offer hath gone stale — it was for another day.");
   }
+
+  await assertNeitherIsPenitent(swap.groupId, [
+    swap.initiatorUserId,
+    swap.targetUserId,
+  ]);
 
   // Block accept if either side already has an accepted swap today.
   const blocking = await db

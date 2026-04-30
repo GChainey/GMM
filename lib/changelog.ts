@@ -7,6 +7,17 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-04-30",
+    title: "The second vow — a path of redemption",
+    items: [
+      "A fallen mortal is no longer condemned by the first stumble. The temple now offers a single dusk — three days from the fall — to take the second vow and re-enter ascension as the penitent.",
+      "The penance is plain: thy daily input redoubles for the days that remain. A 5km rite becomes 10km. Tallies receive a new target — what thou hast already logged, plus twice thy original daily pace through May 31. The outcome thou pledged stands; only the cost of getting there.",
+      "For daily rites, the bar is sterner still: from the moment the second vow is sealed, no further strike may be borne. A single missed rite ends the path for good.",
+      "The penitent are visible to the pantheon — their new bar, their countdown, their reckoning. The Switching is closed to them; chaos hath no purchase on a sealed vow.",
+      "Tallies that fall hopelessly behind shall now be marked fallen mid-month, so the dusk for the second vow opens whilst there is still light to climb back. Make it through May 31 under the doubled bar and thy glyph shall read Reclaimed.",
+    ],
+  },
+  {
+    date: "2026-04-30",
     title: "Secrets that survive the worktree",
     items: [
       "Conductor workspaces now run a setup rite on first creation: `npm install`, then a symlink from this worktree's `.env.local` to a durable file at `$CONDUCTOR_ROOT_PATH/.env.local` — so secrets edited once persist across every future workspace.",
