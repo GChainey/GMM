@@ -102,6 +102,11 @@ export const pledges = pgTable(
     charityName: text("charity_name").notNull().default(""),
     charityUrl: text("charity_url").notNull().default(""),
     lockedAt: timestamp("locked_at", { withTimezone: true }),
+    redemptionAcceptedAt: timestamp("redemption_accepted_at", {
+      withTimezone: true,
+    }),
+    redemptionStartedOn: date("redemption_started_on"),
+    redeemedStrikeLimit: integer("redeemed_strike_limit"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -130,6 +135,7 @@ export const activities = pgTable(
     unit: text("unit"),
     outcomeText: text("outcome_text").notNull().default(""),
     outcomeAchievedAt: timestamp("outcome_achieved_at", { withTimezone: true }),
+    redeemedTargetAmount: integer("redeemed_target_amount"),
   },
   (t) => [index("activities_pledge_idx").on(t.pledgeId)],
 );

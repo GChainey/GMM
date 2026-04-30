@@ -316,7 +316,7 @@ export default async function CheckInPage() {
                       initialAmount={c?.amount ?? null}
                       initialPhotoUrl={c?.photoUrl ?? null}
                       unit={a.unit}
-                      target={a.targetAmount}
+                      target={a.redeemedTargetAmount ?? a.targetAmount}
                       monthTotalSoFar={monthTotalByActivity.get(a.id) ?? 0}
                     />
                   );

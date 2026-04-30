@@ -45,6 +45,7 @@
   --color-gold-foreground: var(--gold-foreground);
   --color-fallen: var(--fallen);
   --color-ascended: var(--ascended);
+  --color-penitent: var(--penitent);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -94,6 +95,7 @@
   --gold-foreground: oklch(0.225 0.025 55);
   --fallen: oklch(0.42 0.14 22);
   --ascended: oklch(0.62 0.08 134);
+  --penitent: oklch(0.52 0.16 48);
   --font-mono-default: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -130,6 +132,7 @@
   --gold-foreground: oklch(0.18 0.018 60);
   --fallen: oklch(0.55 0.18 22);
   --ascended: oklch(0.7 0.09 134);
+  --penitent: oklch(0.65 0.18 48);
 }
 
 @layer base {
