@@ -206,6 +206,41 @@ export const pledgeOptions = pgTable(
   (t) => [index("pledge_options_group_idx").on(t.groupId)],
 );
 
+export const goalSwaps = pgTable(
+  "goal_swaps",
+  {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    groupId: text("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    initiatorUserId: text("initiator_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    targetUserId: text("target_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    swapDate: date("swap_date").notNull(),
+    status: text("status").notNull().default("pending"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("goal_swaps_group_date_idx").on(t.groupId, t.swapDate),
+    index("goal_swaps_initiator_idx").on(t.initiatorUserId),
+    index("goal_swaps_target_idx").on(t.targetUserId),
+  ],
+);
+
+export const GOAL_SWAP_STATUSES = [
+  "pending",
+  "accepted",
+  "declined",
+  "cancelled",
+] as const;
+export type GoalSwapStatus = (typeof GOAL_SWAP_STATUSES)[number];
+
 export const ACTIVITY_KINDS = ["do", "abstain", "monthly_total"] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 
@@ -230,4 +265,5 @@ export type Activity = typeof activities.$inferSelect;
 export type DailyCheckin = typeof dailyCheckins.$inferSelect;
 export type JournalEntry = typeof journalEntries.$inferSelect;
 export type PledgeOption = typeof pledgeOptions.$inferSelect;
+export type GoalSwap = typeof goalSwaps.$inferSelect;
 

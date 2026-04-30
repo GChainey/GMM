@@ -50,6 +50,13 @@
       "when": 1777471903577,
       "tag": "0006_charity_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777558303000,
+      "tag": "0007_goal_swaps",
+      "breakpoints": true
     }
   ]
 }

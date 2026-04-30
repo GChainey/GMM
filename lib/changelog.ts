@@ -6,6 +6,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-04-30",
+    title: "The Switching — chaos enters the pantheon",
+    items: [
+      "Any mortal in a pantheon may now invoke The Switching: name another and offer to swap thy daily goal with theirs, for this day only.",
+      "The other must accept ere chaos takes hold. Once sealed, each mortal walks the other's pledge — the rites of the day rewritten by mutual consent.",
+      "Strikes and streaks remain on thine own ledger; the labour shifts, the vow stands. The check-in altar surfaces thy partner's rites in a divine-blue panel so thou shalt not forget whose path thou walkest.",
+      "Each mortal may switch with but one other per day, and only during the May ritual. Pending offers may be withdrawn or declined; accepted swaps cannot be undone — thou hast made thy bed of chaos, now lie in it.",
+    ],
+  },
+  {
     date: "2026-04-29",
     title: "Demo, on a single breath",
     items: [
