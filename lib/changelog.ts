@@ -14,6 +14,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "The palette also serves as a swift wayfinder: a single keystroke leads to the Altar, the Daily Rite, thy Pantheons, thy Visage, or the Codex.",
       "Quietly: every colour, surface and ornament now flows from a single set of CSS tokens, that future themes may be added without disturbing a single rite.",
       "Quietly: the demo drawer now answers to ⌘⇧K, that the command palette may keep ⌘K for itself.",
+      "Quietly: a fresh staging workspace now binds its own .env.local on the first dev run — the dashboard no longer greets a new mortal with a stack trace where DATABASE_URL ought to be.",
     ],
   },
   {
