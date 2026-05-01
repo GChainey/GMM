@@ -50,12 +50,13 @@ export function DemoDrawer() {
     [refresh],
   );
 
-  // Open on ⌘K / Ctrl+K. Skip when the user is typing in a field so we don't
-  // hijack the shortcut from a future command palette inside an editor.
+  // Cmd+Shift+K opens the demo drawer. Plain Cmd+K is owned by the command
+  // palette, so we require shift here to avoid fighting it.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() !== DEMO_HOTKEY) return;
       if (!(e.metaKey || e.ctrlKey)) return;
+      if (!e.shiftKey) return;
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -270,7 +271,7 @@ export function DemoDrawer() {
           )}
 
           <p className="text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
-            ⌘K toggles this drawer.
+            ⌘⇧K toggles this drawer. ⌘K opens the command palette.
           </p>
         </div>
       </SheetContent>

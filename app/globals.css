@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *, .midnight *));
 
 @theme inline {
   --color-background: var(--background);
@@ -55,7 +55,18 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
+/* ---------------------------------------------------------------------------
+ * Themes
+ *
+ * Each theme is a flat set of CSS variables on a class. next-themes toggles the
+ * class on <html>; defaultTheme is "minimal" (the original marble/gilt look).
+ *
+ * --bg-image is consumed by the body rule below so each theme can decorate (or
+ * strip) the canvas behind every page.
+ * ------------------------------------------------------------------------- */
+
+:root,
+.minimal {
   --background: oklch(0.962 0.012 82);
   --foreground: oklch(0.225 0.025 55);
   --card: oklch(0.982 0.009 82);
@@ -89,7 +100,6 @@
   --sidebar-border: oklch(0.85 0.02 70);
   --sidebar-ring: oklch(0.78 0.135 82);
 
-  /* GMM-specific tokens */
   --divine: oklch(0.395 0.155 264);
   --gold: oklch(0.78 0.135 82);
   --gold-foreground: oklch(0.225 0.025 55);
@@ -97,8 +107,59 @@
   --ascended: oklch(0.62 0.08 134);
   --penitent: oklch(0.52 0.16 48);
   --font-mono-default: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --bg-image:
+    radial-gradient(at 0% 0%, oklch(0.92 0.02 82 / 0.5) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, oklch(0.95 0.018 30 / 0.4) 0px, transparent 55%),
+    radial-gradient(at 60% 100%, oklch(0.96 0.014 80 / 0.6) 0px, transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.30  0 0 0 0.05 0'/></filter><rect width='220' height='220' filter='url(%23n)'/></svg>");
 }
 
+/* Light: clean white, no marble texture, no fractal noise. */
+.light {
+  --background: oklch(0.995 0.002 80);
+  --foreground: oklch(0.205 0.02 55);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.205 0.02 55);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.205 0.02 55);
+  --primary: oklch(0.395 0.155 264);
+  --primary-foreground: oklch(0.985 0.002 80);
+  --secondary: oklch(0.96 0.005 80);
+  --secondary-foreground: oklch(0.205 0.02 55);
+  --muted: oklch(0.965 0.004 80);
+  --muted-foreground: oklch(0.5 0.018 60);
+  --accent: oklch(0.78 0.135 82);
+  --accent-foreground: oklch(0.205 0.02 55);
+  --destructive: oklch(0.42 0.14 22);
+  --border: oklch(0.9 0.005 70);
+  --input: oklch(0.9 0.005 70);
+  --ring: oklch(0.395 0.155 264);
+  --chart-1: oklch(0.395 0.155 264);
+  --chart-2: oklch(0.78 0.135 82);
+  --chart-3: oklch(0.62 0.08 134);
+  --chart-4: oklch(0.42 0.14 22);
+  --chart-5: oklch(0.55 0.025 60);
+  --sidebar: oklch(0.99 0.002 80);
+  --sidebar-foreground: oklch(0.205 0.02 55);
+  --sidebar-primary: oklch(0.395 0.155 264);
+  --sidebar-primary-foreground: oklch(0.985 0.002 80);
+  --sidebar-accent: oklch(0.96 0.005 80);
+  --sidebar-accent-foreground: oklch(0.205 0.02 55);
+  --sidebar-border: oklch(0.9 0.005 70);
+  --sidebar-ring: oklch(0.395 0.155 264);
+
+  --divine: oklch(0.395 0.155 264);
+  --gold: oklch(0.78 0.135 82);
+  --gold-foreground: oklch(0.205 0.02 55);
+  --fallen: oklch(0.42 0.14 22);
+  --ascended: oklch(0.62 0.08 134);
+  --penitent: oklch(0.52 0.16 48);
+
+  --bg-image: none;
+}
+
+/* Dark: existing dark palette, with a subtle deep-violet glow on the canvas. */
 .dark {
   --background: oklch(0.18 0.018 60);
   --foreground: oklch(0.92 0.012 80);
@@ -133,6 +194,103 @@
   --fallen: oklch(0.55 0.18 22);
   --ascended: oklch(0.7 0.09 134);
   --penitent: oklch(0.65 0.18 48);
+
+  --bg-image:
+    radial-gradient(at 0% 0%, oklch(0.28 0.04 270 / 0.55) 0px, transparent 55%),
+    radial-gradient(at 100% 100%, oklch(0.26 0.03 60 / 0.45) 0px, transparent 60%);
+}
+
+/* Parchment: aged paper, ink-brown text, warmer gilt. A scriptorium feel. */
+.parchment {
+  --background: oklch(0.93 0.04 80);
+  --foreground: oklch(0.27 0.04 45);
+  --card: oklch(0.95 0.035 80);
+  --card-foreground: oklch(0.27 0.04 45);
+  --popover: oklch(0.95 0.035 80);
+  --popover-foreground: oklch(0.27 0.04 45);
+  --primary: oklch(0.42 0.1 35);
+  --primary-foreground: oklch(0.96 0.03 80);
+  --secondary: oklch(0.88 0.045 75);
+  --secondary-foreground: oklch(0.27 0.04 45);
+  --muted: oklch(0.9 0.04 78);
+  --muted-foreground: oklch(0.46 0.04 50);
+  --accent: oklch(0.72 0.13 70);
+  --accent-foreground: oklch(0.27 0.04 45);
+  --destructive: oklch(0.46 0.16 22);
+  --border: oklch(0.78 0.05 65);
+  --input: oklch(0.78 0.05 65);
+  --ring: oklch(0.72 0.13 70);
+  --chart-1: oklch(0.42 0.1 35);
+  --chart-2: oklch(0.72 0.13 70);
+  --chart-3: oklch(0.55 0.1 134);
+  --chart-4: oklch(0.46 0.16 22);
+  --chart-5: oklch(0.55 0.04 50);
+  --sidebar: oklch(0.91 0.045 78);
+  --sidebar-foreground: oklch(0.27 0.04 45);
+  --sidebar-primary: oklch(0.42 0.1 35);
+  --sidebar-primary-foreground: oklch(0.96 0.03 80);
+  --sidebar-accent: oklch(0.88 0.045 75);
+  --sidebar-accent-foreground: oklch(0.27 0.04 45);
+  --sidebar-border: oklch(0.78 0.05 65);
+  --sidebar-ring: oklch(0.72 0.13 70);
+
+  --divine: oklch(0.42 0.1 35);
+  --gold: oklch(0.72 0.13 70);
+  --gold-foreground: oklch(0.27 0.04 45);
+  --fallen: oklch(0.46 0.16 22);
+  --ascended: oklch(0.55 0.1 134);
+  --penitent: oklch(0.58 0.15 50);
+
+  --bg-image:
+    radial-gradient(at 20% 0%, oklch(0.86 0.07 70 / 0.55) 0px, transparent 55%),
+    radial-gradient(at 100% 100%, oklch(0.82 0.08 50 / 0.5) 0px, transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.30  0 0 0 0 0.18  0 0 0 0.08 0'/></filter><rect width='220' height='220' filter='url(%23n)'/></svg>");
+}
+
+/* Midnight: deep indigo/violet — the divine after dusk. Acts as a dark theme. */
+.midnight {
+  --background: oklch(0.16 0.04 275);
+  --foreground: oklch(0.93 0.02 280);
+  --card: oklch(0.2 0.05 275);
+  --card-foreground: oklch(0.93 0.02 280);
+  --popover: oklch(0.2 0.05 275);
+  --popover-foreground: oklch(0.93 0.02 280);
+  --primary: oklch(0.72 0.16 280);
+  --primary-foreground: oklch(0.16 0.04 275);
+  --secondary: oklch(0.26 0.05 275);
+  --secondary-foreground: oklch(0.93 0.02 280);
+  --muted: oklch(0.24 0.04 275);
+  --muted-foreground: oklch(0.72 0.04 280);
+  --accent: oklch(0.82 0.14 88);
+  --accent-foreground: oklch(0.16 0.04 275);
+  --destructive: oklch(0.6 0.2 22);
+  --border: oklch(1 0 0 / 14%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.82 0.14 88);
+  --chart-1: oklch(0.72 0.16 280);
+  --chart-2: oklch(0.82 0.14 88);
+  --chart-3: oklch(0.7 0.09 134);
+  --chart-4: oklch(0.6 0.2 22);
+  --chart-5: oklch(0.7 0.04 280);
+  --sidebar: oklch(0.2 0.05 275);
+  --sidebar-foreground: oklch(0.93 0.02 280);
+  --sidebar-primary: oklch(0.72 0.16 280);
+  --sidebar-primary-foreground: oklch(0.16 0.04 275);
+  --sidebar-accent: oklch(0.26 0.05 275);
+  --sidebar-accent-foreground: oklch(0.93 0.02 280);
+  --sidebar-border: oklch(1 0 0 / 14%);
+  --sidebar-ring: oklch(0.82 0.14 88);
+
+  --divine: oklch(0.72 0.16 280);
+  --gold: oklch(0.82 0.14 88);
+  --gold-foreground: oklch(0.16 0.04 275);
+  --fallen: oklch(0.6 0.2 22);
+  --ascended: oklch(0.74 0.1 134);
+  --penitent: oklch(0.7 0.18 48);
+
+  --bg-image:
+    radial-gradient(at 0% 0%, oklch(0.32 0.12 275 / 0.6) 0px, transparent 55%),
+    radial-gradient(at 100% 100%, oklch(0.28 0.1 300 / 0.5) 0px, transparent 60%);
 }
 
 @layer base {
@@ -144,11 +302,7 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    background-image:
-      radial-gradient(at 0% 0%, oklch(0.92 0.02 82 / 0.5) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, oklch(0.95 0.018 30 / 0.4) 0px, transparent 55%),
-      radial-gradient(at 60% 100%, oklch(0.96 0.014 80 / 0.6) 0px, transparent 60%),
-      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.30  0 0 0 0.05 0'/></filter><rect width='220' height='220' filter='url(%23n)'/></svg>");
+    background-image: var(--bg-image, none);
     background-attachment: fixed;
   }
   h1, h2, h3, h4 {
