@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   createContext,
   useCallback,
@@ -9,6 +10,8 @@ import {
   useRef,
   useState,
 } from "react";
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -31,12 +34,18 @@ export function useDayCelebration(): DayCelebrationContextValue | null {
   return useContext(DayCelebrationContext);
 }
 
+export interface CelebrationPantheon {
+  slug: string;
+  name: string;
+}
+
 interface ProviderProps {
   userId: string;
   userName: string;
   date: string;
   activityIds: string[];
   initialCompleted: Record<string, boolean>;
+  pantheons?: CelebrationPantheon[];
   children: React.ReactNode;
 }
 
@@ -46,6 +55,7 @@ export function DayCelebrationProvider({
   date,
   activityIds,
   initialCompleted,
+  pantheons = [],
   children,
 }: ProviderProps) {
   const [completionMap, setCompletionMap] =
@@ -94,6 +104,7 @@ export function DayCelebrationProvider({
         userId={userId}
         userName={userName}
         date={date}
+        pantheons={pantheons}
       />
     </DayCelebrationContext.Provider>
   );
@@ -125,12 +136,14 @@ function DayCompleteDialog({
   userId,
   userName,
   date,
+  pantheons,
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
   userId: string;
   userName: string;
   date: string;
+  pantheons: CelebrationPantheon[];
 }) {
   const [origin] = useState<string>(() =>
     typeof window !== "undefined" ? window.location.origin : "",
@@ -180,6 +193,29 @@ function DayCompleteDialog({
             shareText={shareText}
             downloadFilename={downloadFilename}
           />
+        )}
+        {pantheons.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-border/60 pt-4">
+            <p className="font-display text-[0.65rem] uppercase tracking-[0.4em] text-muted-foreground">
+              See how thy pantheon fares today
+            </p>
+            <div className="flex flex-col gap-2">
+              {pantheons.map((p) => (
+                <Button
+                  key={p.slug}
+                  asChild
+                  variant="outline"
+                  className="justify-between font-display tracking-widest"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <Link href={`/groups/${p.slug}`}>
+                    <span>{p.name}</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              ))}
+            </div>
+          </div>
         )}
       </DialogContent>
     </Dialog>

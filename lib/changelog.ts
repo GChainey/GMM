@@ -7,6 +7,16 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-01",
+    title: "The altar is the first screen — and the day is sealed with a benediction",
+    items: [
+      "Upon entering the temple, a mortal is now delivered straight unto the daily altar. The Pantheon view remains, a step aside in the cloister, but the dawn's rites are the first thing thine eyes shall meet — for that is the work of the day.",
+      "The little parchment-tick beside each rite is no more. In its place stands a clear button — 'Mark done', or for an abstinence, 'Mark refrained' — that inscribes the deed at the very stroke of thy hand. No save, no second confirmation: the moment thou art done, so it is written. Once inscribed, the button gleams gilt and reads 'Done'; touch it again to recant.",
+      "For those who finish the day's rites in one sitting, a single 'Mark all complete' sigil now crowns each pantheon's list, that all outstanding deeds may be sealed at once.",
+      "When every rite is kept, the benediction parchment now also bears the names of thy pantheons — a single sigil per pantheon to step from thine own day into the wider square, that thou mayst behold how thy fellows fare today.",
+    ],
+  },
+  {
+    date: "2026-05-01",
     title: "Seal the day, strike the parchment",
     items: [
       "When a mortal hath kept every daily rite for the day — both the doings and the abstainings — the altar now rises in benediction. A quiet bell sounds and a parchment of the day's deeds is raised before thee, ready to be sent unto the public square.",

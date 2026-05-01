@@ -21,7 +21,7 @@ import {
 } from "@/lib/dates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckinRow } from "@/components/checkin-row";
+import { PledgeRiteList, type RiteRowProps } from "@/components/pledge-rite-list";
 import { DayCelebrationProvider } from "@/components/day-celebration";
 import { JournalEntry } from "@/components/journal-entry";
 import { Share2, Shuffle } from "lucide-react";
@@ -55,6 +55,9 @@ export default async function CheckInPage() {
 
   const groupIdToName = new Map(
     myMemberships.map((m) => [m.group.id, m.group.name]),
+  );
+  const groupIdToSlug = new Map(
+    myMemberships.map((m) => [m.group.id, m.group.slug]),
   );
   const myGroupIds = myMemberships.map((m) => m.group.id);
 
@@ -180,6 +183,18 @@ export default async function CheckInPage() {
       checkinByActivity.get(a.id)?.completed ?? false,
     ]),
   );
+
+  const pantheonsForCelebration = Array.from(
+    new Map(
+      userPledges.map((p) => [
+        p.groupId,
+        {
+          slug: groupIdToSlug.get(p.groupId) ?? "",
+          name: groupIdToName.get(p.groupId) ?? "—",
+        },
+      ]),
+    ).values(),
+  ).filter((p) => p.slug.length > 0);
 
   // The Switching: surface today's accepted swap partner per pantheon.
   const activeSwaps = myGroupIds.length
@@ -312,6 +327,7 @@ export default async function CheckInPage() {
           date={today}
           activityIds={started && !over ? dailyRiteIds : []}
           initialCompleted={initialCompletedMap}
+          pantheons={pantheonsForCelebration}
         >
           {groupedByPledge.map(({ pledge, groupName, acts }) => {
           const partner = partnerByGroupId.get(pledge.groupId);
@@ -388,37 +404,37 @@ export default async function CheckInPage() {
                   Rites unlock May 1st.
                 </p>
               ) : (
-                acts.map((a) => {
-                  const c = checkinByActivity.get(a.id);
-                  const kind =
-                    (a.kind as
-                      | "do"
-                      | "abstain"
-                      | "weekly_tally"
-                      | "monthly_total") ?? "do";
-                  return (
-                    <CheckinRow
-                      key={a.id}
-                      activityId={a.id}
-                      userId={userId}
-                      kind={kind}
-                      label={a.label}
-                      description={a.description}
-                      groupName={groupName}
-                      date={today}
-                      initialCompleted={c?.completed ?? false}
-                      initialAmount={c?.amount ?? null}
-                      initialPhotoUrl={c?.photoUrl ?? null}
-                      unit={a.unit}
-                      target={a.redeemedTargetAmount ?? a.targetAmount}
-                      monthTotalSoFar={monthTotalByActivity.get(a.id) ?? 0}
-                      weekDoneSoFar={weekDoneByActivity.get(a.id) ?? 0}
-                      weekTarget={a.redeemedTargetAmount ?? a.targetAmount}
-                      weekStartIso={currentWeek?.startIso}
-                      weekEndIso={currentWeek?.endIso}
-                    />
-                  );
-                })
+                <PledgeRiteList
+                  date={today}
+                  rites={acts.map((a): RiteRowProps => {
+                    const c = checkinByActivity.get(a.id);
+                    const kind =
+                      (a.kind as
+                        | "do"
+                        | "abstain"
+                        | "weekly_tally"
+                        | "monthly_total") ?? "do";
+                    return {
+                      activityId: a.id,
+                      userId,
+                      kind,
+                      label: a.label,
+                      description: a.description,
+                      groupName,
+                      date: today,
+                      initialCompleted: c?.completed ?? false,
+                      initialAmount: c?.amount ?? null,
+                      initialPhotoUrl: c?.photoUrl ?? null,
+                      unit: a.unit,
+                      target: a.redeemedTargetAmount ?? a.targetAmount,
+                      monthTotalSoFar: monthTotalByActivity.get(a.id) ?? 0,
+                      weekDoneSoFar: weekDoneByActivity.get(a.id) ?? 0,
+                      weekTarget: a.redeemedTargetAmount ?? a.targetAmount,
+                      weekStartIso: currentWeek?.startIso,
+                      weekEndIso: currentWeek?.endIso,
+                    };
+                  })}
+                />
               )}
             </CardContent>
           </Card>

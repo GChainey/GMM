@@ -16,7 +16,7 @@ export default async function LandingPage() {
         <nav className="flex items-center gap-2">
           {userId ? (
             <Button asChild className="gilded font-display tracking-widest">
-              <Link href="/dashboard">Enter</Link>
+              <Link href="/check-in">Enter</Link>
             </Button>
           ) : (
             <>
@@ -57,7 +57,7 @@ export default async function LandingPage() {
                   size="lg"
                   className="gilded font-display tracking-widest"
                 >
-                  <Link href="/dashboard">Enter the Pantheon</Link>
+                  <Link href="/check-in">Enter the Pantheon</Link>
                 </Button>
               ) : (
                 <>
