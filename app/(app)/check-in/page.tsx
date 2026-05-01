@@ -400,6 +400,7 @@ export default async function CheckInPage() {
                     <CheckinRow
                       key={a.id}
                       activityId={a.id}
+                      userId={userId}
                       kind={kind}
                       label={a.label}
                       description={a.description}

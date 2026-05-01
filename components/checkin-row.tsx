@@ -2,15 +2,16 @@
 
 import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
+import { upload } from "@vercel/blob/client";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Camera, FileVideo, Music, Image as ImageIcon } from "lucide-react";
 import {
+  recordProofUploadAction,
   setAmountAction,
   toggleCheckinAction,
-  uploadProofAction,
 } from "@/app/(app)/check-in/actions";
 import { useDayCelebration } from "@/components/day-celebration";
 import { useSounds } from "@/hooks/use-sounds";
@@ -19,9 +20,31 @@ import {
   MAX_PROOF_BYTES,
   PROOF_ACCEPT,
   classifyProofUrl,
+  isAcceptedProofType,
 } from "@/lib/proof-media";
 
 const PROOF_OVERSIZE_MESSAGE = "That offering is over 50 MB. Try a smaller one.";
+
+const MULTIPART_THRESHOLD = 5 * 1024 * 1024;
+
+async function uploadProof(
+  userId: string,
+  activityId: string,
+  date: string,
+  file: File,
+): Promise<string> {
+  const ext = (file.name.split(".").pop() ?? "bin").toLowerCase();
+  const pathname = `proofs/${userId}/${activityId}/${date}-${Date.now()}.${ext}`;
+  const blob = await upload(pathname, file, {
+    access: "public",
+    handleUploadUrl: "/api/upload/proof",
+    contentType: file.type || undefined,
+    multipart: file.size > MULTIPART_THRESHOLD,
+    clientPayload: JSON.stringify({ activityId, date }),
+  });
+  await recordProofUploadAction({ activityId, date, url: blob.url });
+  return blob.url;
+}
 
 function ProofThumbnail({
   url,
@@ -81,6 +104,7 @@ type Kind = "do" | "abstain" | "weekly_tally" | "monthly_total";
 
 interface CheckinRowProps {
   activityId: string;
+  userId: string;
   kind: Kind;
   label: string;
   description: string;
@@ -112,6 +136,7 @@ export function CheckinRow(props: CheckinRowProps) {
 
 function DailyToggleRow({
   activityId,
+  userId,
   kind,
   label,
   description,
@@ -151,14 +176,14 @@ function DailyToggleRow({
       toast.error(PROOF_OVERSIZE_MESSAGE);
       return;
     }
+    if (!isAcceptedProofType(file)) {
+      toast.error("Only images, video, or audio may be inscribed as proof.");
+      return;
+    }
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.set("activityId", activityId);
-      fd.set("date", date);
-      fd.set("file", file);
-      const result = await uploadProofAction(fd);
-      setPhotoUrl(result.url);
+      const url = await uploadProof(userId, activityId, date, file);
+      setPhotoUrl(url);
       setCompleted(true);
       dayCelebration?.setCompletion(activityId, true);
       playSound("proofInscribed");
@@ -233,6 +258,7 @@ function DailyToggleRow({
 
 function WeeklyTallyRow({
   activityId,
+  userId,
   label,
   description,
   groupName,
@@ -282,14 +308,14 @@ function WeeklyTallyRow({
       toast.error(PROOF_OVERSIZE_MESSAGE);
       return;
     }
+    if (!isAcceptedProofType(file)) {
+      toast.error("Only images, video, or audio may be inscribed as proof.");
+      return;
+    }
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.set("activityId", activityId);
-      fd.set("date", date);
-      fd.set("file", file);
-      const result = await uploadProofAction(fd);
-      setPhotoUrl(result.url);
+      const url = await uploadProof(userId, activityId, date, file);
+      setPhotoUrl(url);
       setCompleted(true);
       dayCelebration?.setCompletion(activityId, true);
       playSound("proofInscribed");
@@ -404,6 +430,7 @@ function WeeklyTallyRow({
 
 function MonthlyTallyRow({
   activityId,
+  userId,
   label,
   description,
   groupName,
@@ -458,14 +485,14 @@ function MonthlyTallyRow({
       toast.error(PROOF_OVERSIZE_MESSAGE);
       return;
     }
+    if (!isAcceptedProofType(file)) {
+      toast.error("Only images, video, or audio may be inscribed as proof.");
+      return;
+    }
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.set("activityId", activityId);
-      fd.set("date", date);
-      fd.set("file", file);
-      const result = await uploadProofAction(fd);
-      setPhotoUrl(result.url);
+      const url = await uploadProof(userId, activityId, date, file);
+      setPhotoUrl(url);
       playSound("proofInscribed");
       toast.success("Proof inscribed");
     } catch (err) {
