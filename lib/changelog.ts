@@ -9,10 +9,11 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: "2026-05-01",
     title: "The temple reveals its many faces — a palette for every devotee",
     items: [
-      "Summon ⌘K from any altar to open a new command palette. Within it, choose the temple's aspect: System (follow the world's hour), Minimal (the marble and gilt as thou hast known it), Light (pristine vellum, no ornament), Dark (the midnight vigil), Parchment (an aged scriptorium of ink-brown and warm gilt), or Midnight (deep indigo of the divine after dusk).",
+      "Summon ⌘K from any altar to draw a panel from the right. Within it, two reckonings: a Mode (System, Light, or Dark — by which the brightness of the canvas is set) and a Theme (Minimal, Parchment, or Midnight — by which the flavor of the temple is chosen). System tracks thy device's hour; the rest hold their ground until thou willst it otherwise.",
       "The default remains Minimal — no mortal's altar shifts unbidden. Thy chosen aspect is remembered across visits.",
       "The palette also serves as a swift wayfinder: a single keystroke leads to the Altar, the Daily Rite, thy Pantheons, thy Visage, or the Codex.",
       "Quietly: every colour, surface and ornament now flows from a single set of CSS tokens, that future themes may be added without disturbing a single rite.",
+      "Quietly: the marble gloss on the cards is now of the canvas, not against it — in the dark modes the glossy white wash recedes and the parchment beneath is plainly readable.",
       "Quietly: the demo drawer now answers to ⌘⇧K, that the command palette may keep ⌘K for itself.",
       "Quietly: a fresh staging workspace now binds its own .env.local on the first dev run — the dashboard no longer greets a new mortal with a stack trace where DATABASE_URL ought to be.",
     ],

@@ -108,6 +108,9 @@
   --penitent: oklch(0.52 0.16 48);
   --font-mono-default: ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  --marble-overlay-1: oklch(0.97 0.01 82);
+  --marble-overlay-2: oklch(0.94 0.014 80);
+
   --bg-image:
     radial-gradient(at 0% 0%, oklch(0.92 0.02 82 / 0.5) 0px, transparent 50%),
     radial-gradient(at 100% 0%, oklch(0.95 0.018 30 / 0.4) 0px, transparent 55%),
@@ -155,6 +158,9 @@
   --fallen: oklch(0.42 0.14 22);
   --ascended: oklch(0.62 0.08 134);
   --penitent: oklch(0.52 0.16 48);
+
+  --marble-overlay-1: oklch(1 0 0);
+  --marble-overlay-2: oklch(0.985 0.002 80);
 
   --bg-image: none;
 }
@@ -240,6 +246,9 @@
   --fallen: oklch(0.46 0.16 22);
   --ascended: oklch(0.55 0.1 134);
   --penitent: oklch(0.58 0.15 50);
+
+  --marble-overlay-1: oklch(0.97 0.04 82);
+  --marble-overlay-2: oklch(0.92 0.05 75);
 
   --bg-image:
     radial-gradient(at 20% 0%, oklch(0.86 0.07 70 / 0.55) 0px, transparent 55%),
@@ -338,8 +347,8 @@
   }
   .marble-card {
     background:
-      radial-gradient(at 0% 0%, oklch(0.97 0.01 82) 0%, transparent 60%),
-      radial-gradient(at 100% 100%, oklch(0.94 0.014 80) 0%, transparent 70%),
+      radial-gradient(at 0% 0%, var(--marble-overlay-1, transparent) 0%, transparent 60%),
+      radial-gradient(at 100% 100%, var(--marble-overlay-2, transparent) 0%, transparent 70%),
       var(--card);
   }
 }
