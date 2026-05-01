@@ -12,14 +12,7 @@ import {
   FACE_GAZE_COUNT,
   FACE_STYLE_COUNT,
 } from "@/lib/face-config";
-
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
-const ALLOWED_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
+import { MAX_AVATAR_BYTES, isAcceptedAvatarType } from "@/lib/proof-media";
 
 export async function uploadAvatarAction(formData: FormData) {
   const userId = await requireUserId();
@@ -30,10 +23,10 @@ export async function uploadAvatarAction(formData: FormData) {
     throw new Error("No image provided.");
   }
   if (file.size > MAX_AVATAR_BYTES) {
-    throw new Error("Image must be 5 MB or smaller.");
+    throw new Error("Image must be 10 MB or smaller.");
   }
-  if (file.type && !ALLOWED_TYPES.has(file.type)) {
-    throw new Error("Use a JPG, PNG, WEBP, or GIF.");
+  if (!isAcceptedAvatarType(file)) {
+    throw new Error("Use a JPG, PNG, WEBP, GIF, or HEIC.");
   }
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     throw new Error(
@@ -45,7 +38,7 @@ export async function uploadAvatarAction(formData: FormData) {
   const key = `avatars/${userId}/${Date.now()}.${ext}`;
   const blob = await put(key, file, {
     access: "public",
-    contentType: file.type || "image/jpeg",
+    contentType: file.type || "application/octet-stream",
   });
 
   await db
