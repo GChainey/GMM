@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
 import { groups, pledgeOptions, pledges } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
-import { isLocked } from "@/lib/dates";
 import { PledgeForm, type PledgeOptionLite } from "@/components/pledge-form";
 import type { CharitySelection } from "@/db/schema";
 
@@ -21,8 +20,6 @@ export default async function NewPledgePage({ params }: NewPledgePageProps) {
     .where(eq(groups.slug, slug))
     .limit(1);
   if (!group) notFound();
-
-  if (await isLocked()) redirect(`/groups/${slug}`);
 
   const existing = await db
     .select()
@@ -71,8 +68,8 @@ export default async function NewPledgePage({ params }: NewPledgePageProps) {
           {group.name}
         </h1>
         <p className="mt-2 max-w-xl text-muted-foreground">
-          Write thy vow and the daily rites. Both will be locked at midnight UTC
-          on May 1st. Choose carefully.
+          Write thy vow and the daily rites. Both may be amended later — every
+          revision is recorded in the ledger.
         </p>
       </header>
 

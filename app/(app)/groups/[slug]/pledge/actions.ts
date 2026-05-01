@@ -2,18 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq, inArray, notInArray } from "drizzle-orm";
+import { and, asc, eq, inArray, notInArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import {
   activities,
   groupMemberships,
   groups,
+  pledgeEdits,
   pledgeOptions,
   pledges,
+  type PledgeSnapshot,
 } from "@/db/schema";
 import { ensureUserRow, requireUserId } from "@/lib/auth";
-import { isLocked } from "@/lib/dates";
 
 const activitySchema = z
   .object({
@@ -106,12 +107,6 @@ export async function savePledgeAction(formData: FormData) {
     throw new Error("Thou must take the vow before inscribing a pledge.");
   }
 
-  if (await isLocked()) {
-    throw new Error(
-      "The ritual has begun — pledges are sealed. They cannot be amended.",
-    );
-  }
-
   const validateOption = async (
     optionId: string,
     type: "reward" | "punishment",
@@ -179,6 +174,36 @@ export async function savePledgeAction(formData: FormData) {
     .from(pledges)
     .where(and(eq(pledges.userId, userId), eq(pledges.groupId, group.id)))
     .limit(1);
+
+  let beforeSnapshot: PledgeSnapshot | null = null;
+  if (pledge) {
+    const existingActs = await db
+      .select()
+      .from(activities)
+      .where(eq(activities.pledgeId, pledge.id))
+      .orderBy(asc(activities.sortOrder));
+    beforeSnapshot = {
+      pledge: {
+        pledgeText: pledge.pledgeText,
+        rewardText: pledge.rewardText,
+        punishmentText: pledge.punishmentText,
+        rewardOptionId: pledge.rewardOptionId,
+        punishmentOptionId: pledge.punishmentOptionId,
+        charityName: pledge.charityName,
+        charityUrl: pledge.charityUrl,
+      },
+      activities: existingActs.map((a) => ({
+        id: a.id,
+        label: a.label,
+        description: a.description,
+        sortOrder: a.sortOrder,
+        kind: a.kind,
+        targetAmount: a.targetAmount,
+        unit: a.unit,
+        outcomeText: a.outcomeText,
+      })),
+    };
+  }
 
   if (!pledge) {
     [pledge] = await db
@@ -257,6 +282,36 @@ export async function savePledgeAction(formData: FormData) {
         ),
       );
   }
+
+  const afterSnapshot: PledgeSnapshot = {
+    pledge: {
+      pledgeText: data.pledgeText,
+      rewardText: data.rewardText,
+      punishmentText: data.punishmentText,
+      rewardOptionId: data.rewardOptionId,
+      punishmentOptionId: data.punishmentOptionId,
+      charityName,
+      charityUrl,
+    },
+    activities: data.activities.map((act, idx) => ({
+      id: keepIds[idx],
+      label: act.label,
+      description: act.description,
+      sortOrder: idx,
+      kind: act.kind,
+      targetAmount: act.targetAmount,
+      unit: act.unit,
+      outcomeText: act.outcomeText,
+    })),
+  };
+
+  await db.insert(pledgeEdits).values({
+    pledgeId: pledge.id,
+    userId,
+    groupId: group.id,
+    before: beforeSnapshot,
+    after: afterSnapshot,
+  });
 
   revalidatePath(`/groups/${data.slug}`);
   revalidatePath(`/groups/${data.slug}/pledge/edit`);

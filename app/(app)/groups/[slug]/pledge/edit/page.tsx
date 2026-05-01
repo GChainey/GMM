@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
 import { activities, groups, pledgeOptions, pledges } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
-import { isLocked } from "@/lib/dates";
 import { PledgeForm, type PledgeOptionLite } from "@/components/pledge-form";
 import type { CharitySelection } from "@/db/schema";
 
@@ -21,8 +20,6 @@ export default async function EditPledgePage({ params }: EditPledgePageProps) {
     .where(eq(groups.slug, slug))
     .limit(1);
   if (!group) notFound();
-
-  if (await isLocked()) redirect(`/groups/${slug}`);
 
   const [pledge] = await db
     .select()
@@ -76,7 +73,8 @@ export default async function EditPledgePage({ params }: EditPledgePageProps) {
           {group.name}
         </h1>
         <p className="mt-2 max-w-xl text-muted-foreground">
-          Pledges may be amended until midnight UTC on May 1st.
+          Amend thy vow and rites at any hour. Each revision is recorded in the
+          ledger.
         </p>
       </header>
 

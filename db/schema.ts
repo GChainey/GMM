@@ -4,6 +4,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -211,6 +212,53 @@ export const pledgeOptions = pgTable(
       .defaultNow(),
   },
   (t) => [index("pledge_options_group_idx").on(t.groupId)],
+);
+
+export interface PledgeSnapshot {
+  pledge: {
+    pledgeText: string;
+    rewardText: string;
+    punishmentText: string;
+    rewardOptionId: string | null;
+    punishmentOptionId: string | null;
+    charityName: string;
+    charityUrl: string;
+  };
+  activities: Array<{
+    id?: string;
+    label: string;
+    description: string;
+    sortOrder: number;
+    kind: string;
+    targetAmount: number | null;
+    unit: string | null;
+    outcomeText: string;
+  }>;
+}
+
+export const pledgeEdits = pgTable(
+  "pledge_edits",
+  {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    pledgeId: text("pledge_id")
+      .notNull()
+      .references(() => pledges.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    groupId: text("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    before: jsonb("before").$type<PledgeSnapshot | null>(),
+    after: jsonb("after").$type<PledgeSnapshot>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("pledge_edits_pledge_idx").on(t.pledgeId, t.createdAt),
+    index("pledge_edits_user_idx").on(t.userId, t.createdAt),
+  ],
 );
 
 export const goalSwaps = pgTable(
