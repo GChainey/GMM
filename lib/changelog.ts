@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-01",
+    title: "Seal the day, strike the parchment",
+    items: [
+      "When a mortal hath kept every daily rite for the day — both the doings and the abstainings — the altar now rises in benediction. A quiet bell sounds and a parchment of the day's deeds is raised before thee, ready to be sent unto the public square.",
+      "The dialog bears the day's shareable card alongside the three sigils of dispatch: Share to summon the native sheet, Download to save the parchment for the feed of thy choosing, or Copy link for the unfurling preview.",
+      "The benediction will not chime twice for the same day — a mortal who reloads after sealing is spared a second fanfare. Should thou unmark a rite and remake it, the parchment rises anew.",
+    ],
+  },
+  {
+    date: "2026-05-01",
     title: "Proof of rite welcomes every kind of offering",
     items: [
       "The altar now accepts a wider canon of relics: HEIC and HEIF straight from an iPhone, video clips of thy training, and audio of recital or prayer — alongside the JPG, PNG, WEBP, and GIF of old.",

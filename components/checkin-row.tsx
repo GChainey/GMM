@@ -12,6 +12,7 @@ import {
   toggleCheckinAction,
   uploadProofAction,
 } from "@/app/(app)/check-in/actions";
+import { useDayCelebration } from "@/components/day-celebration";
 import { useSounds } from "@/hooks/use-sounds";
 import { cn } from "@/lib/utils";
 import {
@@ -125,15 +126,18 @@ function DailyToggleRow({
   const [isUploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const playSound = useSounds();
+  const dayCelebration = useDayCelebration();
 
   function toggle(next: boolean) {
     setCompleted(next);
+    dayCelebration?.setCompletion(activityId, next);
     startTransition(async () => {
       try {
         await toggleCheckinAction({ activityId, date, completed: next });
         playSound(next ? "riteChecked" : "riteUnchecked");
       } catch (err) {
         setCompleted(!next);
+        dayCelebration?.setCompletion(activityId, !next);
         const msg = err instanceof Error ? err.message : "Could not save";
         toast.error(msg);
       }
@@ -156,6 +160,7 @@ function DailyToggleRow({
       const result = await uploadProofAction(fd);
       setPhotoUrl(result.url);
       setCompleted(true);
+      dayCelebration?.setCompletion(activityId, true);
       playSound("proofInscribed");
       toast.success("Proof inscribed");
     } catch (err) {
@@ -246,6 +251,7 @@ function WeeklyTallyRow({
   const [isUploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const playSound = useSounds();
+  const dayCelebration = useDayCelebration();
 
   const baseDone = Math.max(0, weekDoneSoFar - (initialCompleted ? 1 : 0));
   const previewDone = baseDone + (completed ? 1 : 0);
@@ -255,12 +261,14 @@ function WeeklyTallyRow({
 
   function toggle(next: boolean) {
     setCompleted(next);
+    dayCelebration?.setCompletion(activityId, next);
     startTransition(async () => {
       try {
         await toggleCheckinAction({ activityId, date, completed: next });
         playSound(next ? "tallyInscribed" : "riteUnchecked");
       } catch (err) {
         setCompleted(!next);
+        dayCelebration?.setCompletion(activityId, !next);
         const msg = err instanceof Error ? err.message : "Could not save";
         toast.error(msg);
       }
@@ -283,6 +291,7 @@ function WeeklyTallyRow({
       const result = await uploadProofAction(fd);
       setPhotoUrl(result.url);
       setCompleted(true);
+      dayCelebration?.setCompletion(activityId, true);
       playSound("proofInscribed");
       toast.success("Proof inscribed");
     } catch (err) {
@@ -414,6 +423,7 @@ function MonthlyTallyRow({
   const [isUploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const playSound = useSounds();
+  const dayCelebration = useDayCelebration();
 
   const totalSoFar = Math.max(0, monthTotalSoFar - savedAmount);
   const previewTotal = totalSoFar + (Number(todayAmount) || 0);
@@ -431,6 +441,7 @@ function MonthlyTallyRow({
       try {
         await setAmountAction({ activityId, date, amount: value });
         setSavedAmount(value);
+        dayCelebration?.setCompletion(activityId, value > 0);
         if (value > 0) playSound("tallyInscribed");
         toast.success(value === 0 ? "Tally cleared" : "Tally inscribed");
       } catch (err) {

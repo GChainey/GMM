@@ -22,6 +22,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckinRow } from "@/components/checkin-row";
+import { DayCelebrationProvider } from "@/components/day-celebration";
 import { JournalEntry } from "@/components/journal-entry";
 import { Share2, Shuffle } from "lucide-react";
 
@@ -30,6 +31,13 @@ export default async function CheckInPage() {
   const today = await resolveToday("UTC");
   const started = hasChallengeStarted(today);
   const over = isChallengeOver(today);
+
+  const [me] = await db
+    .select({ displayName: users.displayName })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const userName = me?.displayName ?? "Mortal";
 
   const myMemberships = await db
     .select({
@@ -162,6 +170,17 @@ export default async function CheckInPage() {
     acts: userActivities.filter((a) => a.pledgeId === p.id),
   }));
 
+  const dailyRites = userActivities.filter(
+    (a) => a.kind === "do" || a.kind === "abstain",
+  );
+  const dailyRiteIds = dailyRites.map((a) => a.id);
+  const initialCompletedMap = Object.fromEntries(
+    dailyRites.map((a) => [
+      a.id,
+      checkinByActivity.get(a.id)?.completed ?? false,
+    ]),
+  );
+
   // The Switching: surface today's accepted swap partner per pantheon.
   const activeSwaps = myGroupIds.length
     ? await db
@@ -287,7 +306,14 @@ export default async function CheckInPage() {
           </CardContent>
         </Card>
       ) : (
-        groupedByPledge.map(({ pledge, groupName, acts }) => {
+        <DayCelebrationProvider
+          userId={userId}
+          userName={userName}
+          date={today}
+          activityIds={started && !over ? dailyRiteIds : []}
+          initialCompleted={initialCompletedMap}
+        >
+          {groupedByPledge.map(({ pledge, groupName, acts }) => {
           const partner = partnerByGroupId.get(pledge.groupId);
           return (
           <Card key={pledge.id} className="marble-card">
@@ -396,7 +422,8 @@ export default async function CheckInPage() {
             </CardContent>
           </Card>
           );
-        })
+        })}
+        </DayCelebrationProvider>
       )}
 
       {started && !over && groupedByPledge.length > 0 && (
