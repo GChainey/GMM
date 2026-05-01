@@ -22,6 +22,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "The bound on a single offering hath been lifted from a meagre 1 MB to a generous 50 MB, that a brief film or a high-fidelity photograph may pass without rebuke. A user inscribing a second proof would, ere now, be turned away by an unspoken limit; that limit is undone.",
       "Where the relic is not a renderable image — a video, a song, a HEIC the browser cannot read — the daily altar shows a tasteful sigil rather than a broken thumbnail, and the link still opens the original file.",
       "Quietly: the avatar parchment now also welcomes HEIC, with its bound raised from 5 MB to 10 MB.",
+      "Quietly: relics now travel from thy device straight to the vault, no longer pausing at the temple gate to be weighed and forwarded — uploads are swifter, and the gate itself bears half the burden it once did.",
     ],
   },
   {
