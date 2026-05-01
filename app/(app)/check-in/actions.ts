@@ -13,6 +13,7 @@ import {
 } from "@/db/schema";
 import { ensureUserRow, requireUserId } from "@/lib/auth";
 import { hasChallengeStarted, isChallengeDate, resolveToday } from "@/lib/dates";
+import { MAX_PROOF_BYTES, isAcceptedProofType } from "@/lib/proof-media";
 
 const toggleSchema = z.object({
   activityId: z.string().min(1),
@@ -105,6 +106,12 @@ export async function uploadProofAction(formData: FormData) {
   if (!(file instanceof File) || file.size === 0) {
     throw new Error("No file provided");
   }
+  if (file.size > MAX_PROOF_BYTES) {
+    throw new Error("That offering is over 50 MB. Try a smaller one.");
+  }
+  if (!isAcceptedProofType(file)) {
+    throw new Error("Only images, video, or audio may be inscribed as proof.");
+  }
   toggleSchema.parse({ activityId, date, completed: true });
   await ensureOwnership(activityId, userId);
 
@@ -118,7 +125,7 @@ export async function uploadProofAction(formData: FormData) {
   const key = `proofs/${userId}/${activityId}/${date}-${Date.now()}.${ext}`;
   const blob = await put(key, file, {
     access: "public",
-    contentType: file.type || "image/jpeg",
+    contentType: file.type || "application/octet-stream",
   });
 
   const existing = await db

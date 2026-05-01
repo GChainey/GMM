@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, Image as ImageIcon } from "lucide-react";
+import { Camera, FileVideo, Music, Image as ImageIcon } from "lucide-react";
 import {
   setAmountAction,
   toggleCheckinAction,
@@ -15,6 +15,67 @@ import {
 import { useDayCelebration } from "@/components/day-celebration";
 import { useSounds } from "@/hooks/use-sounds";
 import { cn } from "@/lib/utils";
+import {
+  MAX_PROOF_BYTES,
+  PROOF_ACCEPT,
+  classifyProofUrl,
+} from "@/lib/proof-media";
+
+const PROOF_OVERSIZE_MESSAGE = "That offering is over 50 MB. Try a smaller one.";
+
+function ProofThumbnail({
+  url,
+  size,
+}: {
+  url: string;
+  size: "sm" | "md";
+}) {
+  const kind = classifyProofUrl(url);
+  const dim = size === "md" ? "h-12 w-12" : "h-10 w-10";
+  const pixels = size === "md" ? 48 : 40;
+  if (kind === "image") {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className={cn(
+          "group relative overflow-hidden rounded-md border border-gold/40",
+          dim,
+        )}
+      >
+        <Image
+          src={url}
+          alt="proof"
+          fill
+          sizes={`${pixels}px`}
+          className="object-cover"
+          unoptimized
+        />
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/30">
+          <ImageIcon className="h-4 w-4 text-white opacity-0 transition group-hover:opacity-100" />
+        </span>
+      </a>
+    );
+  }
+  const Icon = kind === "video" ? FileVideo : Music;
+  const label = kind === "video" ? "Video" : kind === "audio" ? "Audio" : "File";
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      title={`${label} proof — open`}
+      className={cn(
+        "flex items-center justify-center rounded-md border border-gold/40 bg-gold/10 text-gold/80 transition hover:bg-gold/20",
+        dim,
+      )}
+    >
+      <Icon className="h-5 w-5" />
+      <span className="sr-only">Open {label.toLowerCase()} proof</span>
+    </a>
+  );
+}
 
 type Kind = "do" | "abstain" | "weekly_tally" | "monthly_total";
 
@@ -86,8 +147,8 @@ function DailyToggleRow({
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error("That image is over 8 MB. Try a smaller one.");
+    if (file.size > MAX_PROOF_BYTES) {
+      toast.error(PROOF_OVERSIZE_MESSAGE);
       return;
     }
     setUploading(true);
@@ -146,30 +207,11 @@ function DailyToggleRow({
         </div>
       </label>
       <div className="flex items-center gap-2">
-        {photoUrl && (
-          <a
-            href={photoUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="group relative h-12 w-12 overflow-hidden rounded-md border border-gold/40"
-          >
-            <Image
-              src={photoUrl}
-              alt="proof"
-              fill
-              sizes="48px"
-              className="object-cover"
-              unoptimized
-            />
-            <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/30">
-              <ImageIcon className="h-4 w-4 text-white opacity-0 transition group-hover:opacity-100" />
-            </span>
-          </a>
-        )}
+        {photoUrl && <ProofThumbnail url={photoUrl} size="md" />}
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept={PROOF_ACCEPT}
           className="hidden"
           onChange={onFile}
         />
@@ -236,8 +278,8 @@ function WeeklyTallyRow({
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error("That image is over 8 MB. Try a smaller one.");
+    if (file.size > MAX_PROOF_BYTES) {
+      toast.error(PROOF_OVERSIZE_MESSAGE);
       return;
     }
     setUploading(true);
@@ -336,27 +378,11 @@ function WeeklyTallyRow({
       </label>
 
       <div className="flex items-center gap-2">
-        {photoUrl && (
-          <a
-            href={photoUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="relative h-10 w-10 overflow-hidden rounded-md border border-gold/40"
-          >
-            <Image
-              src={photoUrl}
-              alt="proof"
-              fill
-              sizes="40px"
-              className="object-cover"
-              unoptimized
-            />
-          </a>
-        )}
+        {photoUrl && <ProofThumbnail url={photoUrl} size="sm" />}
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept={PROOF_ACCEPT}
           className="hidden"
           onChange={onFile}
         />
@@ -428,8 +454,8 @@ function MonthlyTallyRow({
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error("That image is over 8 MB. Try a smaller one.");
+    if (file.size > MAX_PROOF_BYTES) {
+      toast.error(PROOF_OVERSIZE_MESSAGE);
       return;
     }
     setUploading(true);
@@ -527,27 +553,11 @@ function MonthlyTallyRow({
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          {photoUrl && (
-            <a
-              href={photoUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="relative h-10 w-10 overflow-hidden rounded-md border border-gold/40"
-            >
-              <Image
-                src={photoUrl}
-                alt="proof"
-                fill
-                sizes="40px"
-                className="object-cover"
-                unoptimized
-              />
-            </a>
-          )}
+          {photoUrl && <ProofThumbnail url={photoUrl} size="sm" />}
           <input
             ref={fileRef}
             type="file"
-            accept="image/*"
+            accept={PROOF_ACCEPT}
             className="hidden"
             onChange={onFile}
           />
