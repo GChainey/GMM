@@ -55,48 +55,105 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ===========================================================================
+ * Theme system
+ *
+ * Two independent dimensions on <html>:
+ *
+ *   1. MODE  — class "light" | "dark" (driven by next-themes; "system" maps
+ *              to one of these via prefers-color-scheme).
+ *              Sets neutrals: background, foreground, card, popover, border…
+ *
+ *   2. FLAVOR — attribute data-flavor="basic" | "athenian" | "robot"
+ *               (driven by useFlavor in hooks/use-flavor.ts).
+ *               Sets accents: primary, accent, gold, divine, radius,
+ *               background image, marble overlays. Some flavors refine
+ *               their accents per mode via [data-flavor=…].dark / .light.
+ *
+ * They compose. mode=dark + flavor=athenian → dark neutrals, athenian accents.
+ * Marble overlays are killed unconditionally in .dark, so cards are plain.
+ * ========================================================================= */
+
 :root {
+  --radius: 0.5rem;
+  --font-mono-default: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Light-mode neutrals (also serve as the SSR fallback before next-themes
+   * paints the class). */
   --background: oklch(0.962 0.012 82);
   --foreground: oklch(0.225 0.025 55);
   --card: oklch(0.982 0.009 82);
   --card-foreground: oklch(0.225 0.025 55);
   --popover: oklch(0.982 0.009 82);
   --popover-foreground: oklch(0.225 0.025 55);
-  --primary: oklch(0.395 0.155 264);
-  --primary-foreground: oklch(0.972 0.012 82);
   --secondary: oklch(0.918 0.018 80);
   --secondary-foreground: oklch(0.225 0.025 55);
   --muted: oklch(0.94 0.014 80);
   --muted-foreground: oklch(0.5 0.025 60);
-  --accent: oklch(0.78 0.135 82);
-  --accent-foreground: oklch(0.225 0.025 55);
-  --destructive: oklch(0.42 0.14 22);
   --border: oklch(0.85 0.02 70);
   --input: oklch(0.85 0.02 70);
+  --destructive: oklch(0.42 0.14 22);
+  --primary-foreground: oklch(0.972 0.012 82);
+  --accent-foreground: oklch(0.225 0.025 55);
+  --sidebar: oklch(0.962 0.012 82);
+  --sidebar-foreground: oklch(0.225 0.025 55);
+  --sidebar-border: oklch(0.85 0.02 70);
+  --sidebar-accent: oklch(0.918 0.018 80);
+  --sidebar-accent-foreground: oklch(0.225 0.025 55);
+  --sidebar-primary-foreground: oklch(0.972 0.012 82);
+
+  /* Marble overlays — light values; .dark zeroes these to transparent. */
+  --marble-overlay-1: oklch(0.97 0.01 82);
+  --marble-overlay-2: oklch(0.94 0.014 80);
+
+  /* Default flavor accents (athenian) so the unflavored SSR moment matches
+   * the brand. data-flavor="…" overrides these. */
+  --primary: oklch(0.395 0.155 264);
+  --accent: oklch(0.78 0.135 82);
   --ring: oklch(0.78 0.135 82);
+  --gold: oklch(0.78 0.135 82);
+  --gold-foreground: oklch(0.225 0.025 55);
+  --divine: oklch(0.395 0.155 264);
+  --fallen: oklch(0.42 0.14 22);
+  --ascended: oklch(0.62 0.08 134);
+  --penitent: oklch(0.52 0.16 48);
+  --sidebar-primary: oklch(0.395 0.155 264);
+  --sidebar-ring: oklch(0.78 0.135 82);
+
   --chart-1: oklch(0.395 0.155 264);
   --chart-2: oklch(0.78 0.135 82);
   --chart-3: oklch(0.62 0.08 134);
   --chart-4: oklch(0.42 0.14 22);
   --chart-5: oklch(0.55 0.025 60);
-  --radius: 0.5rem;
+}
+
+/* --------------------------------- MODE --------------------------------- */
+
+.light {
+  --background: oklch(0.962 0.012 82);
+  --foreground: oklch(0.225 0.025 55);
+  --card: oklch(0.982 0.009 82);
+  --card-foreground: oklch(0.225 0.025 55);
+  --popover: oklch(0.982 0.009 82);
+  --popover-foreground: oklch(0.225 0.025 55);
+  --secondary: oklch(0.918 0.018 80);
+  --secondary-foreground: oklch(0.225 0.025 55);
+  --muted: oklch(0.94 0.014 80);
+  --muted-foreground: oklch(0.5 0.025 60);
+  --border: oklch(0.85 0.02 70);
+  --input: oklch(0.85 0.02 70);
+  --destructive: oklch(0.42 0.14 22);
+  --primary-foreground: oklch(0.972 0.012 82);
+  --accent-foreground: oklch(0.225 0.025 55);
   --sidebar: oklch(0.962 0.012 82);
   --sidebar-foreground: oklch(0.225 0.025 55);
-  --sidebar-primary: oklch(0.395 0.155 264);
-  --sidebar-primary-foreground: oklch(0.972 0.012 82);
+  --sidebar-border: oklch(0.85 0.02 70);
   --sidebar-accent: oklch(0.918 0.018 80);
   --sidebar-accent-foreground: oklch(0.225 0.025 55);
-  --sidebar-border: oklch(0.85 0.02 70);
-  --sidebar-ring: oklch(0.78 0.135 82);
+  --sidebar-primary-foreground: oklch(0.972 0.012 82);
 
-  /* GMM-specific tokens */
-  --divine: oklch(0.395 0.155 264);
-  --gold: oklch(0.78 0.135 82);
-  --gold-foreground: oklch(0.225 0.025 55);
-  --fallen: oklch(0.42 0.14 22);
-  --ascended: oklch(0.62 0.08 134);
-  --penitent: oklch(0.52 0.16 48);
-  --font-mono-default: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --marble-overlay-1: oklch(0.97 0.01 82);
+  --marble-overlay-2: oklch(0.94 0.014 80);
 }
 
 .dark {
@@ -106,33 +163,113 @@
   --card-foreground: oklch(0.92 0.012 80);
   --popover: oklch(0.22 0.022 55);
   --popover-foreground: oklch(0.92 0.012 80);
-  --primary: oklch(0.6 0.16 264);
-  --primary-foreground: oklch(0.18 0.018 60);
   --secondary: oklch(0.27 0.025 60);
   --secondary-foreground: oklch(0.92 0.012 80);
   --muted: oklch(0.26 0.02 60);
   --muted-foreground: oklch(0.7 0.02 70);
-  --accent: oklch(0.78 0.135 82);
-  --accent-foreground: oklch(0.18 0.018 60);
-  --destructive: oklch(0.55 0.18 22);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.78 0.135 82);
+  --destructive: oklch(0.55 0.18 22);
+  --primary-foreground: oklch(0.18 0.018 60);
+  --accent-foreground: oklch(0.18 0.018 60);
   --sidebar: oklch(0.22 0.022 55);
   --sidebar-foreground: oklch(0.92 0.012 80);
-  --sidebar-primary: oklch(0.6 0.16 264);
-  --sidebar-primary-foreground: oklch(0.18 0.018 60);
+  --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-accent: oklch(0.27 0.025 60);
   --sidebar-accent-foreground: oklch(0.92 0.012 80);
-  --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.78 0.135 82);
+  --sidebar-primary-foreground: oklch(0.18 0.018 60);
 
-  --divine: oklch(0.6 0.16 264);
+  /* Force marble off in any dark mode regardless of flavor — the cards
+   * become plain --card surfaces. */
+  --marble-overlay-1: transparent;
+  --marble-overlay-2: transparent;
+}
+
+/* -------------------------------- FLAVOR -------------------------------- */
+
+[data-flavor="basic"] {
+  --primary: oklch(0.45 0.04 250);
+  --accent: oklch(0.45 0.04 250);
+  --ring: var(--primary);
+  --gold: oklch(0.45 0.04 250);
+  --gold-foreground: oklch(0.99 0 0);
+  --divine: oklch(0.45 0.04 250);
+  --sidebar-primary: var(--primary);
+  --sidebar-ring: var(--primary);
+
+  --bg-image: none;
+  --marble-overlay-1: transparent;
+  --marble-overlay-2: transparent;
+}
+
+[data-flavor="basic"].dark {
+  --primary: oklch(0.72 0.03 250);
+  --accent: oklch(0.72 0.03 250);
+  --ring: var(--primary);
+  --gold: oklch(0.72 0.03 250);
+  --divine: oklch(0.72 0.03 250);
+  --sidebar-primary: var(--primary);
+  --sidebar-ring: var(--primary);
+}
+
+[data-flavor="athenian"] {
+  --primary: oklch(0.395 0.155 264);
+  --accent: oklch(0.78 0.135 82);
   --gold: oklch(0.78 0.135 82);
+  --gold-foreground: oklch(0.225 0.025 55);
+  --divine: oklch(0.395 0.155 264);
+  --ring: var(--accent);
+  --sidebar-primary: var(--primary);
+  --sidebar-ring: var(--accent);
+}
+
+[data-flavor="athenian"].light {
+  --bg-image:
+    radial-gradient(at 0% 0%, oklch(0.92 0.02 82 / 0.5) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, oklch(0.95 0.018 30 / 0.4) 0px, transparent 55%),
+    radial-gradient(at 60% 100%, oklch(0.96 0.014 80 / 0.6) 0px, transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.30  0 0 0 0.05 0'/></filter><rect width='220' height='220' filter='url(%23n)'/></svg>");
+}
+
+[data-flavor="athenian"].dark {
+  --primary: oklch(0.6 0.16 264);
+  --divine: oklch(0.6 0.16 264);
   --gold-foreground: oklch(0.18 0.018 60);
-  --fallen: oklch(0.55 0.18 22);
-  --ascended: oklch(0.7 0.09 134);
-  --penitent: oklch(0.65 0.18 48);
+  --accent-foreground: oklch(0.18 0.018 60);
+  --primary-foreground: oklch(0.18 0.018 60);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: oklch(0.18 0.018 60);
+
+  --bg-image:
+    radial-gradient(at 0% 0%, oklch(0.28 0.04 270 / 0.55) 0px, transparent 55%),
+    radial-gradient(at 100% 100%, oklch(0.26 0.03 60 / 0.45) 0px, transparent 60%);
+}
+
+[data-flavor="robot"] {
+  --primary: oklch(0.62 0.16 200);
+  --accent: oklch(0.7 0.22 320);
+  --gold: oklch(0.7 0.22 320);
+  --gold-foreground: oklch(0.99 0 0);
+  --divine: oklch(0.62 0.16 200);
+  --ring: var(--accent);
+  --radius: 0.125rem;
+  --sidebar-primary: var(--primary);
+  --sidebar-ring: var(--accent);
+
+  --bg-image: none;
+  --marble-overlay-1: transparent;
+  --marble-overlay-2: transparent;
+}
+
+[data-flavor="robot"].dark {
+  --primary: oklch(0.72 0.18 200);
+  --accent: oklch(0.78 0.24 320);
+  --gold: oklch(0.78 0.24 320);
+  --divine: var(--primary);
+  --primary-foreground: oklch(0.16 0.02 220);
+  --accent-foreground: oklch(0.16 0.02 220);
+  --sidebar-primary: var(--primary);
+  --sidebar-ring: var(--accent);
 }
 
 @layer base {
@@ -144,11 +281,7 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    background-image:
-      radial-gradient(at 0% 0%, oklch(0.92 0.02 82 / 0.5) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, oklch(0.95 0.018 30 / 0.4) 0px, transparent 55%),
-      radial-gradient(at 60% 100%, oklch(0.96 0.014 80 / 0.6) 0px, transparent 60%),
-      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.30  0 0 0 0.05 0'/></filter><rect width='220' height='220' filter='url(%23n)'/></svg>");
+    background-image: var(--bg-image, none);
     background-attachment: fixed;
   }
   h1, h2, h3, h4 {
@@ -184,8 +317,8 @@
   }
   .marble-card {
     background:
-      radial-gradient(at 0% 0%, oklch(0.97 0.01 82) 0%, transparent 60%),
-      radial-gradient(at 100% 100%, oklch(0.94 0.014 80) 0%, transparent 70%),
+      radial-gradient(at 0% 0%, var(--marble-overlay-1, transparent) 0%, transparent 60%),
+      radial-gradient(at 100% 100%, var(--marble-overlay-2, transparent) 0%, transparent 70%),
       var(--card);
   }
 }

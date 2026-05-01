@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { SoundProvider } from "@/components/sound-provider";
+import { FlavorInitScript, ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const display = Cinzel({
@@ -30,12 +31,19 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${display.variable} ${body.variable} h-full`}>
+      <html
+        lang="en"
+        className={`${display.variable} ${body.variable} h-full`}
+        suppressHydrationWarning
+      >
         <body className="min-h-full flex flex-col">
-          <SoundProvider>
-            <TooltipProvider delay={150}>{children}</TooltipProvider>
-          </SoundProvider>
-          <Toaster richColors closeButton position="top-center" />
+          <FlavorInitScript />
+          <ThemeProvider>
+            <SoundProvider>
+              <TooltipProvider delay={150}>{children}</TooltipProvider>
+            </SoundProvider>
+            <Toaster richColors closeButton position="top-center" />
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

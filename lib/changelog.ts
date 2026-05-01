@@ -7,6 +7,20 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-01",
+    title: "The temple reveals its many faces — a palette for every devotee",
+    items: [
+      "Summon ⌘K from any altar to draw a panel from the right. Within it, two independent reckonings: a Mode (Default, Light, or Dark — Default tracking thy device's hour) and a Theme (Basic, Athenian, or Robot — by which the flavor of the temple is chosen). The two combine: dark Athenian, light Robot, default Basic — the matrix is thine.",
+      "Athenian is the marble and gilt as thou hast known it; Basic strips ornament for plain surfaces and a single neutral accent; Robot sharpens the corners and lights the altar with cyan and magenta.",
+      "The default pairing remains Default + Athenian — no mortal's altar shifts unbidden. Both choices are remembered across visits.",
+      "The palette also serves as a swift wayfinder: a single keystroke leads to the Altar, the Daily Rite, thy Pantheons, thy Visage, or the Codex.",
+      "Quietly: every colour, surface and ornament now flows from CSS tokens split across two axes — mode for neutrals, flavor for accents — so future themes may be added without disturbing a single rite.",
+      "Quietly: in any dark mode the marble wash on the cards is now banished entirely — the surfaces are plain, and the parchment beneath is plainly readable.",
+      "Quietly: the demo drawer now answers to ⌘⇧K, that the command palette may keep ⌘K for itself.",
+      "Quietly: a fresh staging workspace now binds its own .env.local on the first dev run — the dashboard no longer greets a new mortal with a stack trace where DATABASE_URL ought to be.",
+    ],
+  },
+  {
+    date: "2026-05-01",
     title: "The day in progress is no longer counted as a stumble",
     items: [
       "On the first dawn of the ritual — and every dawn thereafter — the temple no longer reckons unchecked daily rites as strikes whilst the day yet runs. A mortal who hath not yet inscribed today's deeds is held in suspense, not condemned.",
