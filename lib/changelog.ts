@@ -7,6 +7,17 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-01",
+    title: "The altar greets thee first — and rites are sealed by deed, not by tick",
+    items: [
+      "Upon entering the temple, a mortal is now delivered straight unto the daily altar. The Pantheon view remains, a step aside in the cloister, but the dawn's rites are the first thing thine eyes shall meet — for that is the work of the day.",
+      "The little parchment-tick beside each rite is no more. In its place stands a clear button — 'Mark done', or for an abstinence, 'Mark refrained' — that inscribes the deed at the very stroke of thy hand. No save, no second confirmation: the moment thou art done, so it is written.",
+      "Once inscribed, the button gleams gilt and reads 'Done' — touch it again to recant, should the day's record be in error.",
+      "For those who finish the day's rites in one sitting, a single 'Mark all complete' sigil now crowns each pantheon's list, that all outstanding deeds may be sealed at once.",
+      "When every rite of the day is sealed, a gilded benediction now crowns the altar — 'Thy rites are complete' — bearing two onward paths: share the day's parchment with the world, or step into thy pantheon to behold how thy fellows fare today.",
+    ],
+  },
+  {
+    date: "2026-05-01",
     title: "The day in progress is no longer counted as a stumble",
     items: [
       "On the first dawn of the ritual — and every dawn thereafter — the temple no longer reckons unchecked daily rites as strikes whilst the day yet runs. A mortal who hath not yet inscribed today's deeds is held in suspense, not condemned.",

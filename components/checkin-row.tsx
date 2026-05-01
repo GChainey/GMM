@@ -2,11 +2,11 @@
 
 import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, Image as ImageIcon } from "lucide-react";
+import { Camera, Check, Image as ImageIcon } from "lucide-react";
 import {
   setAmountAction,
   toggleCheckinAction,
@@ -58,6 +58,7 @@ function DailyToggleRow({
   initialCompleted,
   initialPhotoUrl,
 }: CheckinRowProps) {
+  const router = useRouter();
   const [completed, setCompleted] = useState(initialCompleted);
   const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl);
   const [isPending, startTransition] = useTransition();
@@ -71,6 +72,7 @@ function DailyToggleRow({
       try {
         await toggleCheckinAction({ activityId, date, completed: next });
         playSound(next ? "riteChecked" : "riteUnchecked");
+        router.refresh();
       } catch (err) {
         setCompleted(!next);
         const msg = err instanceof Error ? err.message : "Could not save";
@@ -97,6 +99,7 @@ function DailyToggleRow({
       setCompleted(true);
       playSound("proofInscribed");
       toast.success("Proof inscribed");
+      router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload failed";
       toast.error(msg);
@@ -106,11 +109,15 @@ function DailyToggleRow({
     }
   }
 
-  const tone =
-    kind === "abstain"
+  const tone = completed
+    ? kind === "abstain"
+      ? "border-fallen/60 bg-fallen/10"
+      : "border-divine/60 bg-divine/10"
+    : kind === "abstain"
       ? "border-fallen/40 bg-fallen/5"
       : "border-divine/30 bg-divine/5";
-  const checkLabel = kind === "abstain" ? "Refrained today" : "Done today";
+  const doneLabel = kind === "abstain" ? "Refrained" : "Done";
+  const markLabel = kind === "abstain" ? "Mark refrained" : "Mark done";
 
   return (
     <div
@@ -119,28 +126,40 @@ function DailyToggleRow({
         tone,
       )}
     >
-      <label className="flex flex-1 items-start gap-3">
-        <Checkbox
-          checked={completed}
+      <div className="flex flex-1 flex-col gap-1">
+        <p className="font-display text-lg leading-tight">{label}</p>
+        <p className="text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
+          {kind === "abstain" ? "Abstain" : "Do daily"}
+        </p>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )}
+        <p className="text-xs uppercase tracking-widest text-muted-foreground">
+          {groupName}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant={completed ? "default" : "outline"}
           disabled={isPending}
-          onCheckedChange={(v) => toggle(v === true)}
-          className="mt-1 h-5 w-5"
-          aria-label={checkLabel}
-        />
-        <div className="flex flex-col gap-1">
-          <p className="font-display text-lg leading-tight">{label}</p>
-          <p className="text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
-            {kind === "abstain" ? "Abstain" : "Do daily"}
-          </p>
-          {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
+          onClick={() => toggle(!completed)}
+          aria-pressed={completed}
+          className={cn(
+            "font-display tracking-widest",
+            completed && "gilded",
           )}
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            {groupName}
-          </p>
-        </div>
-      </label>
-      <div className="flex items-center gap-2">
+        >
+          {completed ? (
+            <>
+              <Check className="mr-2 h-4 w-4" />
+              {isPending ? "Saving…" : doneLabel}
+            </>
+          ) : (
+            isPending ? "Saving…" : markLabel
+          )}
+        </Button>
         {photoUrl && (
           <a
             href={photoUrl}
@@ -198,6 +217,7 @@ function WeeklyTallyRow({
   weekStartIso,
   weekEndIso,
 }: CheckinRowProps) {
+  const router = useRouter();
   const [completed, setCompleted] = useState(initialCompleted);
   const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl);
   const [isPending, startTransition] = useTransition();
@@ -217,6 +237,7 @@ function WeeklyTallyRow({
       try {
         await toggleCheckinAction({ activityId, date, completed: next });
         playSound(next ? "tallyInscribed" : "riteUnchecked");
+        router.refresh();
       } catch (err) {
         setCompleted(!next);
         const msg = err instanceof Error ? err.message : "Could not save";
@@ -243,6 +264,7 @@ function WeeklyTallyRow({
       setCompleted(true);
       playSound("proofInscribed");
       toast.success("Proof inscribed");
+      router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload failed";
       toast.error(msg);
@@ -307,24 +329,33 @@ function WeeklyTallyRow({
         </div>
       </div>
 
-      <label className="flex flex-1 items-start gap-3">
-        <Checkbox
-          checked={completed}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+        <p className="text-xs text-muted-foreground sm:flex-1">
+          Each day thou performest the rite, mark it. The week&apos;s tally
+          climbs by one.
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          variant={completed ? "default" : "outline"}
           disabled={isPending}
-          onCheckedChange={(v) => toggle(v === true)}
-          className="mt-1 h-5 w-5"
-          aria-label={`Did this today — ${label}`}
-        />
-        <div className="flex flex-col gap-1">
-          <p className="font-display text-sm tracking-tight">
-            {completed ? "Logged today" : "Mark today"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Each day thou performest the rite, mark it. The week&apos;s tally
-            climbs by one.
-          </p>
-        </div>
-      </label>
+          onClick={() => toggle(!completed)}
+          aria-pressed={completed}
+          className={cn(
+            "font-display tracking-widest",
+            completed && "gilded",
+          )}
+        >
+          {completed ? (
+            <>
+              <Check className="mr-2 h-4 w-4" />
+              {isPending ? "Saving…" : "Logged today"}
+            </>
+          ) : (
+            isPending ? "Saving…" : "Mark today"
+          )}
+        </Button>
+      </div>
 
       <div className="flex items-center gap-2">
         {photoUrl && (
@@ -379,6 +410,7 @@ function MonthlyTallyRow({
   target,
   monthTotalSoFar = 0,
 }: CheckinRowProps) {
+  const router = useRouter();
   const [todayAmount, setTodayAmount] = useState<string>(
     initialAmount != null ? String(initialAmount) : "",
   );
@@ -407,6 +439,7 @@ function MonthlyTallyRow({
         setSavedAmount(value);
         if (value > 0) playSound("tallyInscribed");
         toast.success(value === 0 ? "Tally cleared" : "Tally inscribed");
+        router.refresh();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Could not save";
         toast.error(msg);
@@ -431,6 +464,7 @@ function MonthlyTallyRow({
       setPhotoUrl(result.url);
       playSound("proofInscribed");
       toast.success("Proof inscribed");
+      router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload failed";
       toast.error(msg);

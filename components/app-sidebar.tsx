@@ -24,8 +24,8 @@ import {
 } from "@/components/ui/sidebar"
 
 const NAV_MAIN: NavMainItem[] = [
-  { title: "Altar", url: "/dashboard", icon: <FlameIcon /> },
   { title: "Daily Rite", url: "/check-in", icon: <SunriseIcon /> },
+  { title: "Altar", url: "/dashboard", icon: <FlameIcon /> },
   { title: "Pantheons", url: "/groups", icon: <UsersIcon /> },
   { title: "Visage", url: "/profile", icon: <CircleUserRoundIcon /> },
   { title: "Codex", url: "/changelog", icon: <ScrollTextIcon /> },
@@ -46,7 +46,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
               size="lg"
               className="p-1.5! group-data-[collapsible=icon]:p-0!"
               tooltip="God Mode May"
-              render={<Link href="/dashboard" />}
+              render={<Link href="/check-in" />}
             >
               <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                 <PyramidIcon className="size-4" />
