@@ -48,12 +48,18 @@ export default async function CheckInPage() {
   const groupIdToName = new Map(
     myMemberships.map((m) => [m.group.id, m.group.name]),
   );
+  const myGroupIds = myMemberships.map((m) => m.group.id);
 
-  const userPledges = myMemberships.length
+  const userPledges = myGroupIds.length
     ? await db
         .select()
         .from(pledges)
-        .where(eq(pledges.userId, userId))
+        .where(
+          and(
+            eq(pledges.userId, userId),
+            inArray(pledges.groupId, myGroupIds),
+          ),
+        )
     : [];
 
   const pledgeIds = userPledges.map((p) => p.id);
@@ -157,7 +163,6 @@ export default async function CheckInPage() {
   }));
 
   // The Switching: surface today's accepted swap partner per pantheon.
-  const myGroupIds = myMemberships.map((m) => m.group.id);
   const activeSwaps = myGroupIds.length
     ? await db
         .select()
