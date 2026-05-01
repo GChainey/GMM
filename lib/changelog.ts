@@ -12,6 +12,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "When a mortal hath kept every daily rite for the day — both the doings and the abstainings — the altar now rises in benediction. A quiet bell sounds and a parchment of the day's deeds is raised before thee, ready to be sent unto the public square.",
       "The dialog bears the day's shareable card alongside the three sigils of dispatch: Share to summon the native sheet, Download to save the parchment for the feed of thy choosing, or Copy link for the unfurling preview.",
       "The benediction will not chime twice for the same day — a mortal who reloads after sealing is spared a second fanfare. Should thou unmark a rite and remake it, the parchment rises anew.",
+      "Quietly: the scribes who tend this temple now hold their parchments at the gates — no rite is sealed unto main without the founder's own nod.",
     ],
   },
   {
