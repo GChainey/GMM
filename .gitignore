@@ -44,3 +44,6 @@ next-env.d.ts
 # clerk configuration (can include secrets)
 /.clerk/
 .env*.local
+
+# claude code runtime
+.claude/scheduled_tasks.lock

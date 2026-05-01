@@ -23,6 +23,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "The founder of a pantheon may now archive the rite — sealing it from the public square and from every member's altar. Vows and ledger remain intact, awaiting return; the founder may restore the pantheon at any time from its settings.",
       "Should a pantheon be wholly unworthy of memory — a test, a misfire, a scrap from the workshop — the founder may now dissolve it forever. The name must be retyped to confirm; once dissolved, all bound vows, deeds, tallies, journals and chaos-swaps are unmade with it.",
       "Archived pantheons appear in a quiet roll on the public square, visible only to their founder, with a single sigil to manage or restore.",
+      "Quietly: dropdown chevrons throughout the temple now sit a hair from the right edge — no longer pressed against the marble border as if seeking escape.",
     ],
   },
   {
