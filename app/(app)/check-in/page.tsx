@@ -22,7 +22,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PledgeRiteList, type RiteRowProps } from "@/components/pledge-rite-list";
-import { DayCompleteBanner } from "@/components/day-complete-banner";
+import { DayCelebrationProvider } from "@/components/day-celebration";
 import { JournalEntry } from "@/components/journal-entry";
 import { Share2, Shuffle } from "lucide-react";
 
@@ -31,6 +31,13 @@ export default async function CheckInPage() {
   const today = await resolveToday("UTC");
   const started = hasChallengeStarted(today);
   const over = isChallengeOver(today);
+
+  const [me] = await db
+    .select({ displayName: users.displayName })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const userName = me?.displayName ?? "Mortal";
 
   const myMemberships = await db
     .select({
@@ -166,15 +173,18 @@ export default async function CheckInPage() {
     acts: userActivities.filter((a) => a.pledgeId === p.id),
   }));
 
-  const allRitesDone =
-    started &&
-    !over &&
-    userActivities.length > 0 &&
-    userActivities.every(
-      (a) => checkinByActivity.get(a.id)?.completed === true,
-    );
+  const dailyRites = userActivities.filter(
+    (a) => a.kind === "do" || a.kind === "abstain",
+  );
+  const dailyRiteIds = dailyRites.map((a) => a.id);
+  const initialCompletedMap = Object.fromEntries(
+    dailyRites.map((a) => [
+      a.id,
+      checkinByActivity.get(a.id)?.completed ?? false,
+    ]),
+  );
 
-  const pantheonsForBanner = Array.from(
+  const pantheonsForCelebration = Array.from(
     new Map(
       userPledges.map((p) => [
         p.groupId,
@@ -285,7 +295,7 @@ export default async function CheckInPage() {
                 : "Mark each rite as it is performed. Photo proof is welcomed."}
           </p>
         </div>
-        {started && groupedByPledge.length > 0 && !allRitesDone && (
+        {started && groupedByPledge.length > 0 && (
           <Button
             asChild
             variant="outline"
@@ -299,15 +309,6 @@ export default async function CheckInPage() {
         )}
       </header>
 
-      {allRitesDone && (
-        <DayCompleteBanner
-          userId={userId}
-          date={today}
-          riteCount={userActivities.length}
-          pantheons={pantheonsForBanner}
-        />
-      )}
-
       {groupedByPledge.length === 0 || userActivities.length === 0 ? (
         <Card className="marble-card">
           <CardContent className="flex flex-col items-start gap-3 p-8">
@@ -320,7 +321,15 @@ export default async function CheckInPage() {
           </CardContent>
         </Card>
       ) : (
-        groupedByPledge.map(({ pledge, groupName, acts }) => {
+        <DayCelebrationProvider
+          userId={userId}
+          userName={userName}
+          date={today}
+          activityIds={started && !over ? dailyRiteIds : []}
+          initialCompleted={initialCompletedMap}
+          pantheons={pantheonsForCelebration}
+        >
+          {groupedByPledge.map(({ pledge, groupName, acts }) => {
           const partner = partnerByGroupId.get(pledge.groupId);
           return (
           <Card key={pledge.id} className="marble-card">
@@ -407,6 +416,7 @@ export default async function CheckInPage() {
                         | "monthly_total") ?? "do";
                     return {
                       activityId: a.id,
+                      userId,
                       kind,
                       label: a.label,
                       description: a.description,
@@ -429,7 +439,8 @@ export default async function CheckInPage() {
             </CardContent>
           </Card>
           );
-        })
+        })}
+        </DayCelebrationProvider>
       )}
 
       {started && !over && groupedByPledge.length > 0 && (

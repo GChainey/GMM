@@ -7,13 +7,47 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-01",
-    title: "The altar greets thee first — and rites are sealed by deed, not by tick",
+    title: "The altar is the first screen — and the day is sealed with a benediction",
     items: [
       "Upon entering the temple, a mortal is now delivered straight unto the daily altar. The Pantheon view remains, a step aside in the cloister, but the dawn's rites are the first thing thine eyes shall meet — for that is the work of the day.",
-      "The little parchment-tick beside each rite is no more. In its place stands a clear button — 'Mark done', or for an abstinence, 'Mark refrained' — that inscribes the deed at the very stroke of thy hand. No save, no second confirmation: the moment thou art done, so it is written.",
-      "Once inscribed, the button gleams gilt and reads 'Done' — touch it again to recant, should the day's record be in error.",
+      "The little parchment-tick beside each rite is no more. In its place stands a clear button — 'Mark done', or for an abstinence, 'Mark refrained' — that inscribes the deed at the very stroke of thy hand. No save, no second confirmation: the moment thou art done, so it is written. Once inscribed, the button gleams gilt and reads 'Done'; touch it again to recant.",
       "For those who finish the day's rites in one sitting, a single 'Mark all complete' sigil now crowns each pantheon's list, that all outstanding deeds may be sealed at once.",
-      "When every rite of the day is sealed, a gilded benediction now crowns the altar — 'Thy rites are complete' — bearing two onward paths: share the day's parchment with the world, or step into thy pantheon to behold how thy fellows fare today.",
+      "When every rite is kept, the benediction parchment now also bears the names of thy pantheons — a single sigil per pantheon to step from thine own day into the wider square, that thou mayst behold how thy fellows fare today.",
+    ],
+  },
+  {
+    date: "2026-05-01",
+    title: "Seal the day, strike the parchment",
+    items: [
+      "When a mortal hath kept every daily rite for the day — both the doings and the abstainings — the altar now rises in benediction. A quiet bell sounds and a parchment of the day's deeds is raised before thee, ready to be sent unto the public square.",
+      "The dialog bears the day's shareable card alongside the three sigils of dispatch: Share to summon the native sheet, Download to save the parchment for the feed of thy choosing, or Copy link for the unfurling preview.",
+      "The benediction will not chime twice for the same day — a mortal who reloads after sealing is spared a second fanfare. Should thou unmark a rite and remake it, the parchment rises anew.",
+      "Quietly: the scribes who tend this temple now hold their parchments at the gates — no rite is sealed unto main without the founder's own nod.",
+    ],
+  },
+  {
+    date: "2026-05-01",
+    title: "Proof of rite welcomes every kind of offering",
+    items: [
+      "The altar now accepts a wider canon of relics: HEIC and HEIF straight from an iPhone, video clips of thy training, and audio of recital or prayer — alongside the JPG, PNG, WEBP, and GIF of old.",
+      "The bound on a single offering hath been lifted from a meagre 1 MB to a generous 50 MB, that a brief film or a high-fidelity photograph may pass without rebuke. A user inscribing a second proof would, ere now, be turned away by an unspoken limit; that limit is undone.",
+      "Where the relic is not a renderable image — a video, a song, a HEIC the browser cannot read — the daily altar shows a tasteful sigil rather than a broken thumbnail, and the link still opens the original file.",
+      "Quietly: the avatar parchment now also welcomes HEIC, with its bound raised from 5 MB to 10 MB.",
+      "Quietly: relics now travel from thy device straight to the vault, no longer pausing at the temple gate to be weighed and forwarded — uploads are swifter, and the gate itself bears half the burden it once did.",
+    ],
+  },
+  {
+    date: "2026-05-01",
+    title: "The temple reveals its many faces — a palette for every devotee",
+    items: [
+      "Summon ⌘K from any altar to draw a panel from the right. Within it, two independent reckonings: a Mode (Default, Light, or Dark — Default tracking thy device's hour) and a Theme (Basic, Athenian, or Robot — by which the flavor of the temple is chosen). The two combine: dark Athenian, light Robot, default Basic — the matrix is thine.",
+      "Athenian is the marble and gilt as thou hast known it; Basic strips ornament for plain surfaces and a single neutral accent; Robot sharpens the corners and lights the altar with cyan and magenta.",
+      "The default pairing remains Default + Athenian — no mortal's altar shifts unbidden. Both choices are remembered across visits.",
+      "The palette also serves as a swift wayfinder: a single keystroke leads to the Altar, the Daily Rite, thy Pantheons, thy Visage, or the Codex.",
+      "Quietly: every colour, surface and ornament now flows from CSS tokens split across two axes — mode for neutrals, flavor for accents — so future themes may be added without disturbing a single rite.",
+      "Quietly: in any dark mode the marble wash on the cards is now banished entirely — the surfaces are plain, and the parchment beneath is plainly readable.",
+      "Quietly: the demo drawer now answers to ⌘⇧K, that the command palette may keep ⌘K for itself.",
+      "Quietly: a fresh staging workspace now binds its own .env.local on the first dev run — the dashboard no longer greets a new mortal with a stack trace where DATABASE_URL ought to be.",
     ],
   },
   {

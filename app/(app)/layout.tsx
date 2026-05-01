@@ -9,6 +9,7 @@ import { demoPantheonExists, seedDemoPantheonCore } from "@/lib/demo-seed";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { DemoDrawer } from "@/components/demo-drawer";
+import { CommandPalette } from "@/components/command-palette";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function AppLayout({
@@ -67,6 +68,7 @@ export default async function AppLayout({
           God Mode May · MMXXVI
         </footer>
       </SidebarInset>
+      <CommandPalette />
       {isDemoMode() && <DemoDrawer />}
     </SidebarProvider>
   );

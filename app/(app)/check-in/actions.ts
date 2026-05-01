@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { put } from "@vercel/blob";
 import { db } from "@/db";
 import {
   activities,
@@ -94,32 +93,33 @@ export async function toggleCheckinAction(input: {
   // Pantheon pages also benefit; let Next.js revalidate when visited.
 }
 
-export async function uploadProofAction(formData: FormData) {
+const recordProofSchema = z.object({
+  activityId: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  url: z.string().url(),
+});
+
+export async function recordProofUploadAction(input: {
+  activityId: string;
+  date: string;
+  url: string;
+}) {
   const userId = await requireUserId();
   await ensureUserRow();
+  const data = recordProofSchema.parse(input);
 
-  const activityId = String(formData.get("activityId") ?? "");
-  const date = String(formData.get("date") ?? "");
-  const file = formData.get("file");
-
-  if (!(file instanceof File) || file.size === 0) {
-    throw new Error("No file provided");
+  if (!isChallengeDate(data.date)) {
+    throw new Error("Only May dates may be marked.");
   }
-  toggleSchema.parse({ activityId, date, completed: true });
-  await ensureOwnership(activityId, userId);
+  await ensureOwnership(data.activityId, userId);
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    throw new Error(
-      "Photo uploads are not configured. Set BLOB_READ_WRITE_TOKEN to enable proof of rite.",
-    );
+  const expectedPathPart = `/proofs/${userId}/${data.activityId}/${data.date}-`;
+  if (
+    !data.url.includes(".public.blob.vercel-storage.com") ||
+    !data.url.includes(expectedPathPart)
+  ) {
+    throw new Error("That offering does not bear thy seal.");
   }
-
-  const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
-  const key = `proofs/${userId}/${activityId}/${date}-${Date.now()}.${ext}`;
-  const blob = await put(key, file, {
-    access: "public",
-    contentType: file.type || "image/jpeg",
-  });
 
   const existing = await db
     .select()
@@ -127,8 +127,8 @@ export async function uploadProofAction(formData: FormData) {
     .where(
       and(
         eq(dailyCheckins.userId, userId),
-        eq(dailyCheckins.activityId, activityId),
-        eq(dailyCheckins.date, date),
+        eq(dailyCheckins.activityId, data.activityId),
+        eq(dailyCheckins.date, data.date),
       ),
     )
     .limit(1);
@@ -136,17 +136,17 @@ export async function uploadProofAction(formData: FormData) {
   if (existing.length === 0) {
     await db.insert(dailyCheckins).values({
       userId,
-      activityId,
-      date,
+      activityId: data.activityId,
+      date: data.date,
       completed: true,
-      photoUrl: blob.url,
+      photoUrl: data.url,
     });
   } else {
     await db
       .update(dailyCheckins)
       .set({
         completed: true,
-        photoUrl: blob.url,
+        photoUrl: data.url,
         updatedAt: new Date(),
       })
       .where(eq(dailyCheckins.id, existing[0].id));
@@ -154,7 +154,7 @@ export async function uploadProofAction(formData: FormData) {
 
   revalidatePath("/check-in");
   revalidatePath("/dashboard");
-  return { url: blob.url };
+  return { url: data.url };
 }
 
 export async function setAmountAction(input: {

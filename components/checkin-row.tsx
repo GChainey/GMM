@@ -2,23 +2,114 @@
 
 import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, Check, Image as ImageIcon } from "lucide-react";
 import {
+  Camera,
+  Check,
+  FileVideo,
+  Music,
+  Image as ImageIcon,
+} from "lucide-react";
+import {
+  recordProofUploadAction,
   setAmountAction,
   toggleCheckinAction,
-  uploadProofAction,
 } from "@/app/(app)/check-in/actions";
+import { useDayCelebration } from "@/components/day-celebration";
 import { useSounds } from "@/hooks/use-sounds";
 import { cn } from "@/lib/utils";
+import {
+  MAX_PROOF_BYTES,
+  PROOF_ACCEPT,
+  classifyProofUrl,
+  isAcceptedProofType,
+} from "@/lib/proof-media";
+
+const PROOF_OVERSIZE_MESSAGE = "That offering is over 50 MB. Try a smaller one.";
+
+const MULTIPART_THRESHOLD = 5 * 1024 * 1024;
+
+async function uploadProof(
+  userId: string,
+  activityId: string,
+  date: string,
+  file: File,
+): Promise<string> {
+  const ext = (file.name.split(".").pop() ?? "bin").toLowerCase();
+  const pathname = `proofs/${userId}/${activityId}/${date}-${Date.now()}.${ext}`;
+  const blob = await upload(pathname, file, {
+    access: "public",
+    handleUploadUrl: "/api/upload/proof",
+    contentType: file.type || undefined,
+    multipart: file.size > MULTIPART_THRESHOLD,
+    clientPayload: JSON.stringify({ activityId, date }),
+  });
+  await recordProofUploadAction({ activityId, date, url: blob.url });
+  return blob.url;
+}
+
+function ProofThumbnail({
+  url,
+  size,
+}: {
+  url: string;
+  size: "sm" | "md";
+}) {
+  const kind = classifyProofUrl(url);
+  const dim = size === "md" ? "h-12 w-12" : "h-10 w-10";
+  const pixels = size === "md" ? 48 : 40;
+  if (kind === "image") {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className={cn(
+          "group relative overflow-hidden rounded-md border border-gold/40",
+          dim,
+        )}
+      >
+        <Image
+          src={url}
+          alt="proof"
+          fill
+          sizes={`${pixels}px`}
+          className="object-cover"
+          unoptimized
+        />
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/30">
+          <ImageIcon className="h-4 w-4 text-white opacity-0 transition group-hover:opacity-100" />
+        </span>
+      </a>
+    );
+  }
+  const Icon = kind === "video" ? FileVideo : Music;
+  const label = kind === "video" ? "Video" : kind === "audio" ? "Audio" : "File";
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      title={`${label} proof — open`}
+      className={cn(
+        "flex items-center justify-center rounded-md border border-gold/40 bg-gold/10 text-gold/80 transition hover:bg-gold/20",
+        dim,
+      )}
+    >
+      <Icon className="h-5 w-5" />
+      <span className="sr-only">Open {label.toLowerCase()} proof</span>
+    </a>
+  );
+}
 
 type Kind = "do" | "abstain" | "weekly_tally" | "monthly_total";
 
 interface CheckinRowProps {
   activityId: string;
+  userId: string;
   kind: Kind;
   label: string;
   description: string;
@@ -50,6 +141,7 @@ export function CheckinRow(props: CheckinRowProps) {
 
 function DailyToggleRow({
   activityId,
+  userId,
   kind,
   label,
   description,
@@ -58,23 +150,24 @@ function DailyToggleRow({
   initialCompleted,
   initialPhotoUrl,
 }: CheckinRowProps) {
-  const router = useRouter();
   const [completed, setCompleted] = useState(initialCompleted);
   const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl);
   const [isPending, startTransition] = useTransition();
   const [isUploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const playSound = useSounds();
+  const dayCelebration = useDayCelebration();
 
   function toggle(next: boolean) {
     setCompleted(next);
+    dayCelebration?.setCompletion(activityId, next);
     startTransition(async () => {
       try {
         await toggleCheckinAction({ activityId, date, completed: next });
         playSound(next ? "riteChecked" : "riteUnchecked");
-        router.refresh();
       } catch (err) {
         setCompleted(!next);
+        dayCelebration?.setCompletion(activityId, !next);
         const msg = err instanceof Error ? err.message : "Could not save";
         toast.error(msg);
       }
@@ -84,22 +177,22 @@ function DailyToggleRow({
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error("That image is over 8 MB. Try a smaller one.");
+    if (file.size > MAX_PROOF_BYTES) {
+      toast.error(PROOF_OVERSIZE_MESSAGE);
+      return;
+    }
+    if (!isAcceptedProofType(file)) {
+      toast.error("Only images, video, or audio may be inscribed as proof.");
       return;
     }
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.set("activityId", activityId);
-      fd.set("date", date);
-      fd.set("file", file);
-      const result = await uploadProofAction(fd);
-      setPhotoUrl(result.url);
+      const url = await uploadProof(userId, activityId, date, file);
+      setPhotoUrl(url);
       setCompleted(true);
+      dayCelebration?.setCompletion(activityId, true);
       playSound("proofInscribed");
       toast.success("Proof inscribed");
-      router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload failed";
       toast.error(msg);
@@ -160,30 +253,11 @@ function DailyToggleRow({
             isPending ? "Saving…" : markLabel
           )}
         </Button>
-        {photoUrl && (
-          <a
-            href={photoUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="group relative h-12 w-12 overflow-hidden rounded-md border border-gold/40"
-          >
-            <Image
-              src={photoUrl}
-              alt="proof"
-              fill
-              sizes="48px"
-              className="object-cover"
-              unoptimized
-            />
-            <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/30">
-              <ImageIcon className="h-4 w-4 text-white opacity-0 transition group-hover:opacity-100" />
-            </span>
-          </a>
-        )}
+        {photoUrl && <ProofThumbnail url={photoUrl} size="md" />}
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept={PROOF_ACCEPT}
           className="hidden"
           onChange={onFile}
         />
@@ -205,6 +279,7 @@ function DailyToggleRow({
 
 function WeeklyTallyRow({
   activityId,
+  userId,
   label,
   description,
   groupName,
@@ -217,13 +292,13 @@ function WeeklyTallyRow({
   weekStartIso,
   weekEndIso,
 }: CheckinRowProps) {
-  const router = useRouter();
   const [completed, setCompleted] = useState(initialCompleted);
   const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl);
   const [isPending, startTransition] = useTransition();
   const [isUploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const playSound = useSounds();
+  const dayCelebration = useDayCelebration();
 
   const baseDone = Math.max(0, weekDoneSoFar - (initialCompleted ? 1 : 0));
   const previewDone = baseDone + (completed ? 1 : 0);
@@ -233,13 +308,14 @@ function WeeklyTallyRow({
 
   function toggle(next: boolean) {
     setCompleted(next);
+    dayCelebration?.setCompletion(activityId, next);
     startTransition(async () => {
       try {
         await toggleCheckinAction({ activityId, date, completed: next });
         playSound(next ? "tallyInscribed" : "riteUnchecked");
-        router.refresh();
       } catch (err) {
         setCompleted(!next);
+        dayCelebration?.setCompletion(activityId, !next);
         const msg = err instanceof Error ? err.message : "Could not save";
         toast.error(msg);
       }
@@ -249,22 +325,22 @@ function WeeklyTallyRow({
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error("That image is over 8 MB. Try a smaller one.");
+    if (file.size > MAX_PROOF_BYTES) {
+      toast.error(PROOF_OVERSIZE_MESSAGE);
+      return;
+    }
+    if (!isAcceptedProofType(file)) {
+      toast.error("Only images, video, or audio may be inscribed as proof.");
       return;
     }
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.set("activityId", activityId);
-      fd.set("date", date);
-      fd.set("file", file);
-      const result = await uploadProofAction(fd);
-      setPhotoUrl(result.url);
+      const url = await uploadProof(userId, activityId, date, file);
+      setPhotoUrl(url);
       setCompleted(true);
+      dayCelebration?.setCompletion(activityId, true);
       playSound("proofInscribed");
       toast.success("Proof inscribed");
-      router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload failed";
       toast.error(msg);
@@ -358,27 +434,11 @@ function WeeklyTallyRow({
       </div>
 
       <div className="flex items-center gap-2">
-        {photoUrl && (
-          <a
-            href={photoUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="relative h-10 w-10 overflow-hidden rounded-md border border-gold/40"
-          >
-            <Image
-              src={photoUrl}
-              alt="proof"
-              fill
-              sizes="40px"
-              className="object-cover"
-              unoptimized
-            />
-          </a>
-        )}
+        {photoUrl && <ProofThumbnail url={photoUrl} size="sm" />}
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept={PROOF_ACCEPT}
           className="hidden"
           onChange={onFile}
         />
@@ -400,6 +460,7 @@ function WeeklyTallyRow({
 
 function MonthlyTallyRow({
   activityId,
+  userId,
   label,
   description,
   groupName,
@@ -410,7 +471,6 @@ function MonthlyTallyRow({
   target,
   monthTotalSoFar = 0,
 }: CheckinRowProps) {
-  const router = useRouter();
   const [todayAmount, setTodayAmount] = useState<string>(
     initialAmount != null ? String(initialAmount) : "",
   );
@@ -420,6 +480,7 @@ function MonthlyTallyRow({
   const [isUploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const playSound = useSounds();
+  const dayCelebration = useDayCelebration();
 
   const totalSoFar = Math.max(0, monthTotalSoFar - savedAmount);
   const previewTotal = totalSoFar + (Number(todayAmount) || 0);
@@ -437,9 +498,9 @@ function MonthlyTallyRow({
       try {
         await setAmountAction({ activityId, date, amount: value });
         setSavedAmount(value);
+        dayCelebration?.setCompletion(activityId, value > 0);
         if (value > 0) playSound("tallyInscribed");
         toast.success(value === 0 ? "Tally cleared" : "Tally inscribed");
-        router.refresh();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Could not save";
         toast.error(msg);
@@ -450,21 +511,20 @@ function MonthlyTallyRow({
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error("That image is over 8 MB. Try a smaller one.");
+    if (file.size > MAX_PROOF_BYTES) {
+      toast.error(PROOF_OVERSIZE_MESSAGE);
+      return;
+    }
+    if (!isAcceptedProofType(file)) {
+      toast.error("Only images, video, or audio may be inscribed as proof.");
       return;
     }
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.set("activityId", activityId);
-      fd.set("date", date);
-      fd.set("file", file);
-      const result = await uploadProofAction(fd);
-      setPhotoUrl(result.url);
+      const url = await uploadProof(userId, activityId, date, file);
+      setPhotoUrl(url);
       playSound("proofInscribed");
       toast.success("Proof inscribed");
-      router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload failed";
       toast.error(msg);
@@ -550,27 +610,11 @@ function MonthlyTallyRow({
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          {photoUrl && (
-            <a
-              href={photoUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="relative h-10 w-10 overflow-hidden rounded-md border border-gold/40"
-            >
-              <Image
-                src={photoUrl}
-                alt="proof"
-                fill
-                sizes="40px"
-                className="object-cover"
-                unoptimized
-              />
-            </a>
-          )}
+          {photoUrl && <ProofThumbnail url={photoUrl} size="sm" />}
           <input
             ref={fileRef}
             type="file"
-            accept="image/*"
+            accept={PROOF_ACCEPT}
             className="hidden"
             onChange={onFile}
           />

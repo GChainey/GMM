@@ -10,6 +10,7 @@ import {
   removeAvatarAction,
   uploadAvatarAction,
 } from "@/app/(app)/profile/actions";
+import { AVATAR_ACCEPT, MAX_AVATAR_BYTES } from "@/lib/proof-media";
 
 interface AvatarUploaderProps {
   name: string;
@@ -30,8 +31,8 @@ export function AvatarUploader({
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be 5 MB or smaller.");
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error("Image must be 10 MB or smaller.");
       return;
     }
     setUploading(true);
@@ -75,7 +76,7 @@ export function AvatarUploader({
         <input
           ref={fileRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif"
+          accept={AVATAR_ACCEPT}
           className="hidden"
           onChange={onFile}
         />
@@ -107,8 +108,8 @@ export function AvatarUploader({
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          PNG, JPG, WEBP, or GIF — 5 MB max. Default is a generated face from
-          thy name.
+          PNG, JPG, WEBP, GIF, or HEIC — 10 MB max. Default is a generated face
+          from thy name.
         </p>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CheckinRow } from "@/components/checkin-row";
+import { useDayCelebration } from "@/components/day-celebration";
 import { toggleCheckinAction } from "@/app/(app)/check-in/actions";
 import { useSounds } from "@/hooks/use-sounds";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ type Kind = "do" | "abstain" | "weekly_tally" | "monthly_total";
 
 export interface RiteRowProps {
   activityId: string;
+  userId: string;
   kind: Kind;
   label: string;
   description: string;
@@ -39,6 +41,7 @@ interface PledgeRiteListProps {
 export function PledgeRiteList({ date, rites }: PledgeRiteListProps) {
   const router = useRouter();
   const playSound = useSounds();
+  const dayCelebration = useDayCelebration();
   const [isMarking, startMarking] = useTransition();
   const [allMarked, setAllMarked] = useState(false);
 
@@ -65,6 +68,11 @@ export function PledgeRiteList({ date, rites }: PledgeRiteListProps) {
         ),
       );
       const failed = results.filter((r) => r.status === "rejected").length;
+      results.forEach((res, i) => {
+        if (res.status === "fulfilled") {
+          dayCelebration?.setCompletion(outstanding[i].activityId, true);
+        }
+      });
       if (failed === 0) {
         playSound("riteChecked");
         toast.success(
