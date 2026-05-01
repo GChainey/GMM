@@ -7,6 +7,15 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-01",
+    title: "Seal the day, strike the parchment",
+    items: [
+      "When a mortal hath kept every daily rite for the day — both the doings and the abstainings — the altar now rises in benediction. A quiet bell sounds and a parchment of the day's deeds is raised before thee, ready to be sent unto the public square.",
+      "The dialog bears the day's shareable card alongside the three sigils of dispatch: Share to summon the native sheet, Download to save the parchment for the feed of thy choosing, or Copy link for the unfurling preview.",
+      "The benediction will not chime twice for the same day — a mortal who reloads after sealing is spared a second fanfare. Should thou unmark a rite and remake it, the parchment rises anew.",
+    ],
+  },
+  {
+    date: "2026-05-01",
     title: "The temple reveals its many faces — a palette for every devotee",
     items: [
       "Summon ⌘K from any altar to draw a panel from the right. Within it, two independent reckonings: a Mode (Default, Light, or Dark — Default tracking thy device's hour) and a Theme (Basic, Athenian, or Robot — by which the flavor of the temple is chosen). The two combine: dark Athenian, light Robot, default Basic — the matrix is thine.",
