@@ -196,19 +196,25 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
   for (const date of dates) {
     if (date > todayIso) break;
 
+    // Today is still in progress: don't count incomplete daily rites as
+    // strikes, don't break the streak, and don't trip fall triggers until
+    // the day is actually past. Running totals still update so today's
+    // tally inscriptions show in progress bars.
+    const isPastDay = date < todayIso;
+
     let allDone = true;
     for (const a of dailyActivities) {
-      evaluatedSlots += 1;
+      if (isPastDay) evaluatedSlots += 1;
       const done = completedLookup.get(`${a.id}::${date}`) === true;
       if (!done) {
-        strikes += 1;
+        if (isPastDay) strikes += 1;
         allDone = false;
       }
     }
     if (allDone) {
       runningStreak += 1;
       if (runningStreak > longestStreak) longestStreak = runningStreak;
-    } else {
+    } else if (isPastDay) {
       runningStreak = 0;
     }
     if (date === todayIso) currentStreak = runningStreak;
@@ -226,7 +232,7 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
       }
     }
 
-    if (fallenOn === null) {
+    if (fallenOn === null && isPastDay) {
       if (strikes > effectiveStrikeLimit) {
         fallenOn = date;
         continue;
@@ -248,10 +254,9 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
           }
         }
       }
-      // End-of-week trigger for weekly tallies: when a week closes (today is
-      // its final day) and the user fell short of the week's target, the path
-      // is broken. We only check when we're actually past or on the week's
-      // final day so the week is fully decided.
+      // End-of-week trigger fires only after the final day of a week is
+      // fully past — checking on the closing day itself would punish a
+      // week that still has hours of mortal striving left.
       if (fallenOn === null && week && date === week.endIso) {
         for (const a of weeklyActivities) {
           const target = weeklyTargetForWeek(a, week.days);

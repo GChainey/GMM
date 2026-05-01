@@ -21,6 +21,15 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     date: "2026-05-01",
+    title: "The day in progress is no longer counted as a stumble",
+    items: [
+      "On the first dawn of the ritual — and every dawn thereafter — the temple no longer reckons unchecked daily rites as strikes whilst the day yet runs. A mortal who hath not yet inscribed today's deeds is held in suspense, not condemned.",
+      "Streaks likewise hold their breath through the day: the chain breaks only at the dusk of a missed day, not at its dawning. Today's rites still appear pending on the altar, awaiting thy mark.",
+      "Mid-month tally reckonings and end-of-week verdicts now wait until the day is wholly past before passing judgement — no more falling on day one with the ink still wet on thy vow.",
+    ],
+  },
+  {
+    date: "2026-05-01",
     title: "The seal is broken — vows may yet be amended",
     items: [
       "Pledges and rites no longer harden at the stroke of May. A mortal may revisit the parchment at any hour — refine a wording, mend a target, add a rite the world has demanded — for the whole length of the ritual.",
