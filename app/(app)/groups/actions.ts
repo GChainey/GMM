@@ -316,6 +316,7 @@ export async function archiveGroupAction(formData: FormData) {
 
   revalidatePath("/groups");
   revalidatePath("/dashboard");
+  revalidatePath("/check-in");
   revalidatePath(`/groups/${slug}`);
   revalidatePath(`/groups/${slug}/settings`);
   redirect("/dashboard");
@@ -333,6 +334,7 @@ export async function unarchiveGroupAction(formData: FormData) {
 
   revalidatePath("/groups");
   revalidatePath("/dashboard");
+  revalidatePath("/check-in");
   revalidatePath(`/groups/${slug}`);
   revalidatePath(`/groups/${slug}/settings`);
   redirect(`/groups/${slug}/settings`);
@@ -356,6 +358,7 @@ export async function deleteGroupAction(formData: FormData) {
 
   revalidatePath("/groups");
   revalidatePath("/dashboard");
+  revalidatePath("/check-in");
   redirect("/dashboard");
 }
 

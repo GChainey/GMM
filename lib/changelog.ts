@@ -12,6 +12,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Pledges and rites no longer harden at the stroke of May. A mortal may revisit the parchment at any hour — refine a wording, mend a target, add a rite the world has demanded — for the whole length of the ritual.",
       "Every revision is now committed to a private ledger: who amended, when, and the parchment as it stood before and after. Nothing is shown to the pantheon yet; the ledger waits for the day approvals and edit-windows are written into the pantheon's own settings.",
       "Quietly: the misleading copy promising a midnight seal has been struck from the inscription and amendment pages.",
+      "Quietly: when a pantheon is archived or dissolved, its rites now vanish at once from the daily altar — no more orphan ledger lines under a nameless heading.",
     ],
   },
   {
