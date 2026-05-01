@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   ChevronRightIcon,
+  CircleIcon,
+  CpuIcon,
+  ColumnsIcon,
   MonitorIcon,
   MoonIcon,
-  MoonStarIcon,
-  ScrollIcon,
   SparklesIcon,
   SunIcon,
 } from "lucide-react";
@@ -20,41 +21,26 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  FLAVORS,
+  MODES,
+  useFlavor,
+  type FlavorValue,
+  type ModeValue,
+} from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 
-type Option = {
-  value: string;
-  label: string;
-  hint: string;
-  Icon: React.ComponentType<{ className?: string }>;
+const MODE_ICONS: Record<ModeValue, React.ComponentType<{ className?: string }>> = {
+  system: MonitorIcon,
+  light: SunIcon,
+  dark: MoonIcon,
 };
 
-const MODE_OPTIONS: Option[] = [
-  { value: "system", label: "System", hint: "Follow thy device's hour", Icon: MonitorIcon },
-  { value: "light", label: "Light", hint: "Pristine vellum, no ornament", Icon: SunIcon },
-  { value: "dark", label: "Dark", hint: "The midnight vigil", Icon: MoonIcon },
-];
-
-const THEME_OPTIONS: Option[] = [
-  {
-    value: "minimal",
-    label: "Minimal",
-    hint: "Marble & gilt — the original altar",
-    Icon: SparklesIcon,
-  },
-  {
-    value: "parchment",
-    label: "Parchment",
-    hint: "Aged scriptorium, ink-brown",
-    Icon: ScrollIcon,
-  },
-  {
-    value: "midnight",
-    label: "Midnight",
-    hint: "Deep indigo of the divine",
-    Icon: MoonStarIcon,
-  },
-];
+const FLAVOR_ICONS: Record<FlavorValue, React.ComponentType<{ className?: string }>> = {
+  basic: CircleIcon,
+  athenian: SparklesIcon,
+  robot: CpuIcon,
+};
 
 const NAV_PAGES = [
   { label: "Altar", href: "/dashboard", hint: "The daily dashboard" },
@@ -67,7 +53,8 @@ const NAV_PAGES = [
 export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme: mode, setTheme: setMode } = useTheme();
+  const { flavor, setFlavor } = useFlavor();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -90,10 +77,6 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const handleSelectTheme = (value: string) => {
-    setTheme(value);
-  };
-
   const handleNavigate = (href: string) => {
     setOpen(false);
     router.push(href);
@@ -105,25 +88,35 @@ export function CommandPalette() {
         <SheetHeader className="border-b border-border/60">
           <SheetTitle className="font-display tracking-widest">Command</SheetTitle>
           <SheetDescription>
-            Choose a mode, a theme, or a destination. ⌘K toggles this drawer.
+            Mode and theme are independent. ⌘K toggles this drawer.
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 space-y-6 overflow-y-auto p-4">
-          <RadioSection
+          <RadioSection<ModeValue>
             label="Mode"
-            description="Brightness scheme. System tracks thy device."
-            options={MODE_OPTIONS}
-            active={theme}
-            onSelect={handleSelectTheme}
+            description="Brightness scheme. Default tracks thy device."
+            options={MODES.map((m) => ({
+              value: m.value,
+              label: m.label,
+              hint: m.hint,
+              Icon: MODE_ICONS[m.value],
+            }))}
+            active={(mode as ModeValue) ?? "system"}
+            onSelect={(value) => setMode(value)}
           />
 
-          <RadioSection
+          <RadioSection<FlavorValue>
             label="Theme"
-            description="The flavor of the temple."
-            options={THEME_OPTIONS}
-            active={theme}
-            onSelect={handleSelectTheme}
+            description="Flavor of the temple — accents, ornament, edges."
+            options={FLAVORS.map((f) => ({
+              value: f.value,
+              label: f.label,
+              hint: f.hint,
+              Icon: FLAVOR_ICONS[f.value],
+            }))}
+            active={flavor}
+            onSelect={(value) => setFlavor(value)}
           />
 
           <section>
@@ -138,6 +131,7 @@ export function CommandPalette() {
                   onClick={() => handleNavigate(p.href)}
                   className="group flex items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-accent/30"
                 >
+                  <ColumnsIcon className="size-4 text-muted-foreground" />
                   <span className="font-medium">{p.label}</span>
                   <span className="text-xs text-muted-foreground">{p.hint}</span>
                   <ChevronRightIcon className="ml-auto size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5" />
@@ -151,7 +145,14 @@ export function CommandPalette() {
   );
 }
 
-function RadioSection({
+type RadioOption<T extends string> = {
+  value: T;
+  label: string;
+  hint: string;
+  Icon: React.ComponentType<{ className?: string }>;
+};
+
+function RadioSection<T extends string>({
   label,
   description,
   options,
@@ -160,9 +161,9 @@ function RadioSection({
 }: {
   label: string;
   description: string;
-  options: Option[];
-  active: string | undefined;
-  onSelect: (value: string) => void;
+  options: RadioOption<T>[];
+  active: T;
+  onSelect: (value: T) => void;
 }) {
   return (
     <fieldset className="border-0 p-0">

@@ -4,7 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { SoundProvider } from "@/components/sound-provider";
-import { ThemeProvider } from "@/components/theme-provider";
+import { FlavorInitScript, ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const display = Cinzel({
@@ -37,6 +37,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <body className="min-h-full flex flex-col">
+          <FlavorInitScript />
           <ThemeProvider>
             <SoundProvider>
               <TooltipProvider delay={150}>{children}</TooltipProvider>
