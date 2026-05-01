@@ -7,6 +7,16 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-01",
+    title: "Proof of rite welcomes every kind of offering",
+    items: [
+      "The altar now accepts a wider canon of relics: HEIC and HEIF straight from an iPhone, video clips of thy training, and audio of recital or prayer — alongside the JPG, PNG, WEBP, and GIF of old.",
+      "The bound on a single offering hath been lifted from a meagre 1 MB to a generous 50 MB, that a brief film or a high-fidelity photograph may pass without rebuke. A user inscribing a second proof would, ere now, be turned away by an unspoken limit; that limit is undone.",
+      "Where the relic is not a renderable image — a video, a song, a HEIC the browser cannot read — the daily altar shows a tasteful sigil rather than a broken thumbnail, and the link still opens the original file.",
+      "Quietly: the avatar parchment now also welcomes HEIC, with its bound raised from 5 MB to 10 MB.",
+    ],
+  },
+  {
+    date: "2026-05-01",
     title: "The temple reveals its many faces — a palette for every devotee",
     items: [
       "Summon ⌘K from any altar to draw a panel from the right. Within it, two independent reckonings: a Mode (Default, Light, or Dark — Default tracking thy device's hour) and a Theme (Basic, Athenian, or Robot — by which the flavor of the temple is chosen). The two combine: dark Athenian, light Robot, default Basic — the matrix is thine.",
