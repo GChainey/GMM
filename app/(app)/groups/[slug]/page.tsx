@@ -22,6 +22,8 @@ import {
 import {
   challengeDates,
   challengeDayNumber,
+  getDemoToday,
+  graceCutoffIsoInTz,
   hasChallengeStarted,
   isChallengeOver,
   resolveToday,
@@ -119,6 +121,9 @@ export default async function PantheonPage({ params }: PageProps) {
 
   const dates = challengeDates();
   const todayIso = await resolveToday("UTC");
+  const demoToday = await getDemoToday();
+  const memberCutoff = (tz: string | null | undefined): string =>
+    demoToday ?? graceCutoffIsoInTz(tz);
   const isOwner = group.ownerId === userId;
   const isMember = myMembership.length > 0;
 
@@ -218,15 +223,17 @@ export default async function PantheonPage({ params }: PageProps) {
       targetAmount: a.targetAmount,
       redeemedTargetAmount: a.redeemedTargetAmount,
     }));
+    const graceCutoffIso = memberCutoff(user.timezone);
     const status = computeStatus({
       activities: actLite,
       checkins: checks,
       strikeLimit: group.strikeLimit,
       todayIso,
+      graceCutoffIso,
       redemptionStartedOn: pledge?.redemptionStartedOn ?? null,
       redeemedStrikeLimit: pledge?.redeemedStrikeLimit ?? null,
     });
-    const cells = buildCells(actLite, checks, todayIso);
+    const cells = buildCells(actLite, checks, todayIso, graceCutoffIso);
     return { user, membership, pledge, acts, actLite, status, cells };
   });
 

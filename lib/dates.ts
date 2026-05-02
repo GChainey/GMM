@@ -22,6 +22,34 @@ export function todayIsoInTz(timezone: string | null | undefined): string {
   return formatter.format(now);
 }
 
+// The lockout flips at noon (local time) the day after a date has passed.
+// Returns the earliest date still inside the grace window — i.e. dates
+// `< cutoff` are locked (strikes, streak break, fall triggers), dates
+// `>= cutoff` are still editable in user terms. Before noon, yesterday
+// is still in grace; at/after noon, yesterday is now locked.
+export function graceCutoffIsoInTz(
+  timezone: string | null | undefined,
+): string {
+  const tz = timezone ?? TIMEZONE_FALLBACK;
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  const get = (type: string) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  const todayIso = `${get("year")}-${get("month")}-${get("day")}`;
+  const hour = Number(get("hour")) % 24;
+  if (hour >= 12) return todayIso;
+  const d = new Date(`${todayIso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
 export async function getDemoToday(): Promise<string | null> {
   if (!isDemoMode()) return null;
   const store = await cookies();
@@ -43,6 +71,20 @@ export async function resolveToday(
     return DEMO_DEFAULT_TODAY;
   }
   return real;
+}
+
+export async function resolveGraceCutoff(
+  timezone: string | null | undefined,
+): Promise<string> {
+  // Demo mode: the lockout follows the demo clock with no live noon grace,
+  // so the cutoff equals demo-today.
+  const demo = await getDemoToday();
+  if (demo) return demo;
+  const real = todayIsoInTz(timezone);
+  if (isDemoMode() && (real < challengeStartIso() || real > challengeEndIso())) {
+    return DEMO_DEFAULT_TODAY;
+  }
+  return graceCutoffIsoInTz(timezone);
 }
 
 export function challengeStartIso(): string {

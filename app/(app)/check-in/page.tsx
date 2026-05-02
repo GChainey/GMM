@@ -16,6 +16,7 @@ import {
   challengeStartIso,
   hasChallengeStarted,
   isChallengeOver,
+  resolveGraceCutoff,
   resolveToday,
   weekForDate,
 } from "@/lib/dates";
@@ -28,16 +29,24 @@ import { Share2, Shuffle } from "lucide-react";
 
 export default async function CheckInPage() {
   const userId = await requireUserId();
-  const today = await resolveToday("UTC");
-  const started = hasChallengeStarted(today);
-  const over = isChallengeOver(today);
 
   const [me] = await db
-    .select({ displayName: users.displayName })
+    .select({ displayName: users.displayName, timezone: users.timezone })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
   const userName = me?.displayName ?? "Mortal";
+  const tz = me?.timezone ?? "UTC";
+
+  const today = await resolveToday(tz);
+  const graceCutoff = await resolveGraceCutoff(tz);
+  // If the lockout has not yet flipped past yesterday, yesterday is still
+  // markable in user terms — surface it on the rite so a forgotten day or
+  // a tech-free evening can still be inscribed before noon.
+  const inGrace = graceCutoff < today && hasChallengeStarted(graceCutoff);
+  const yesterday = inGrace ? graceCutoff : null;
+  const started = hasChallengeStarted(today);
+  const over = isChallengeOver(today);
 
   const myMemberships = await db
     .select({
@@ -98,6 +107,22 @@ export default async function CheckInPage() {
 
   const checkinByActivity = new Map(
     todaysCheckins.map((c) => [c.activityId, c]),
+  );
+
+  const yesterdaysCheckins =
+    yesterday && activityIds.length
+      ? await db
+          .select()
+          .from(dailyCheckins)
+          .where(
+            and(
+              eq(dailyCheckins.userId, userId),
+              eq(dailyCheckins.date, yesterday),
+            ),
+          )
+      : [];
+  const yesterdayCheckinByActivity = new Map(
+    yesterdaysCheckins.map((c) => [c.activityId, c]),
   );
 
   const monthlyActivityIds = userActivities
@@ -172,6 +197,20 @@ export default async function CheckInPage() {
     groupName: groupIdToName.get(p.groupId) ?? "—",
     acts: userActivities.filter((a) => a.pledgeId === p.id),
   }));
+
+  const yesterdayGroupedByPledge = yesterday
+    ? groupedByPledge
+        .map(({ pledge, groupName, acts }) => ({
+          pledge,
+          groupName,
+          acts: acts.filter(
+            (a) =>
+              (a.kind === "do" || a.kind === "abstain") &&
+              !(yesterdayCheckinByActivity.get(a.id)?.completed ?? false),
+          ),
+        }))
+        .filter((g) => g.acts.length > 0)
+    : [];
 
   const dailyRites = userActivities.filter(
     (a) => a.kind === "do" || a.kind === "abstain",
@@ -308,6 +347,61 @@ export default async function CheckInPage() {
           </Button>
         )}
       </header>
+
+      {started &&
+        !over &&
+        yesterday &&
+        yesterdayGroupedByPledge.length > 0 && (
+          <Card className="marble-card border-divine/40 bg-divine/5">
+            <CardHeader>
+              <p className="font-display text-[0.65rem] uppercase tracking-[0.4em] text-divine">
+                Yesterday — {yesterday}
+              </p>
+              <CardTitle className="font-display text-xl tracking-tight">
+                The lockout flips at noon
+              </CardTitle>
+              <p className="text-sm italic text-muted-foreground">
+                Forgot to mark a rite, or kept the evening tech-free? Inscribe
+                it now — yesterday remains in grace until noon today.
+              </p>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {yesterdayGroupedByPledge.map(({ pledge, groupName, acts }) => (
+                <div key={pledge.id} className="flex flex-col gap-2">
+                  <p className="font-display text-sm tracking-tight">
+                    {groupName}
+                  </p>
+                  <PledgeRiteList
+                    date={yesterday}
+                    rites={acts.map((a): RiteRowProps => {
+                      const c = yesterdayCheckinByActivity.get(a.id);
+                      const kind =
+                        (a.kind as
+                          | "do"
+                          | "abstain"
+                          | "weekly_tally"
+                          | "monthly_total") ?? "do";
+                      return {
+                        activityId: a.id,
+                        userId,
+                        kind,
+                        label: a.label,
+                        description: a.description,
+                        groupName,
+                        date: yesterday,
+                        initialCompleted: c?.completed ?? false,
+                        initialAmount: c?.amount ?? null,
+                        initialPhotoUrl: c?.photoUrl ?? null,
+                        unit: a.unit,
+                        target: a.redeemedTargetAmount ?? a.targetAmount,
+                      };
+                    })}
+                  />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
       {groupedByPledge.length === 0 || userActivities.length === 0 ? (
         <Card className="marble-card">

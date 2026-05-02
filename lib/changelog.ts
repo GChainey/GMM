@@ -7,6 +7,16 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-02",
+    title: "The lockout flips at noon — yesterday lingers in grace",
+    items: [
+      "A mortal who forgot the evening's rites, or who kept the night tech-free, is no longer condemned at the stroke of midnight. Yesterday's rites now linger in grace until the noon bell of today — strikes do not accrue, streaks do not break, and falls do not trigger until that lockout flips.",
+      "Whensoever a mortal lands on the altar before noon and yesterday is still incomplete, the day is offered for inscription right there — a small parchment crowned with 'Yesterday — the lockout flips at noon' surfaces every unmarked daily rite. Mark them as thou wouldst today, and the ledger updates as if the deed were done in time.",
+      "The benediction parchment for the day still rises the moment the day is sealed, but it now whispers that the day stays open until noon tomorrow — should a mortal wish to amend a rite by morning's light, the way is open.",
+      "The reckoning of cells in thy pantheon's mosaic also honours the grace: a yesterday still in the lockout window glows pending-divine, not crimson-fallen, until the noon bell rings.",
+    ],
+  },
+  {
+    date: "2026-05-02",
     title: "The shareable parchment finds its temperance",
     items: [
       "The four hero cards atop the pantheon roundup — Ascending, Penitent, Ascended, Fallen — no longer shout in four different tints. Each now rests on the same calm parchment as its fellows, distinguished only by a slim coloured stripe down its left edge, that the eye may glide along the row and settle upon the numbers themselves.",

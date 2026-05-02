@@ -7,11 +7,13 @@ import {
   dailyCheckins,
   groups,
   pledges,
+  users,
 } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
 import {
   challengeDayNumber,
   challengeEndIso,
+  resolveGraceCutoff,
   resolveToday,
 } from "@/lib/dates";
 import {
@@ -65,7 +67,14 @@ export default async function RedemptionPage({ params }: PageProps) {
     .from(dailyCheckins)
     .where(eq(dailyCheckins.userId, userId));
 
-  const todayIso = await resolveToday("UTC");
+  const [me] = await db
+    .select({ timezone: users.timezone })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const tz = me?.timezone ?? "UTC";
+  const todayIso = await resolveToday(tz);
+  const graceCutoffIso = await resolveGraceCutoff(tz);
   const actLite: ActivityLite[] = acts.map((a) => ({
     id: a.id,
     kind:
@@ -87,6 +96,7 @@ export default async function RedemptionPage({ params }: PageProps) {
     checkins: myChecks,
     strikeLimit: group.strikeLimit,
     todayIso,
+    graceCutoffIso,
   });
 
   const eligible = canSeekRedemption(status);

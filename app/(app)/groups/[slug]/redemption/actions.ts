@@ -4,12 +4,13 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { activities, dailyCheckins, groups, pledges } from "@/db/schema";
+import { activities, dailyCheckins, groups, pledges, users } from "@/db/schema";
 import { ensureUserRow, requireUserId } from "@/lib/auth";
 import {
   challengeDayNumber,
   challengeEndIso,
   hasChallengeStarted,
+  resolveGraceCutoff,
   resolveToday,
 } from "@/lib/dates";
 import {
@@ -44,7 +45,14 @@ export async function acceptSecondVowAction(input: { slug: string }) {
     throw new Error("The second vow hath already been taken.");
   }
 
-  const todayIso = await resolveToday("UTC");
+  const [me] = await db
+    .select({ timezone: users.timezone })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const tz = me?.timezone ?? "UTC";
+  const todayIso = await resolveToday(tz);
+  const graceCutoffIso = await resolveGraceCutoff(tz);
   if (!hasChallengeStarted(todayIso)) {
     throw new Error("The ritual hath not yet begun.");
   }
@@ -82,6 +90,7 @@ export async function acceptSecondVowAction(input: { slug: string }) {
     checkins: myChecks,
     strikeLimit: group.strikeLimit,
     todayIso,
+    graceCutoffIso,
   });
 
   if (!canSeekRedemption(status)) {

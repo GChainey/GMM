@@ -170,7 +170,9 @@ function DayCompleteDialog({
           </DialogTitle>
           <DialogDescription className="italic">
             Thy deeds bound to thy vow. Strike the parchment to the wider world,
-            that the public square may witness how the day was met.
+            that the public square may witness how the day was met. Should
+            thou wish to amend a rite, the day stays open until noon
+            tomorrow.
           </DialogDescription>
         </DialogHeader>
         {imageUrl && (

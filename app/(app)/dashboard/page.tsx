@@ -7,6 +7,7 @@ import {
   groupMemberships,
   groups,
   pledges,
+  users,
 } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
 import { computeStatus } from "@/lib/status";
@@ -14,6 +15,7 @@ import {
   challengeStartIso,
   hasChallengeStarted,
   isChallengeOver,
+  resolveGraceCutoff,
   resolveToday,
 } from "@/lib/dates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +26,13 @@ import { OutcomeBlock } from "@/components/outcome-block";
 
 export default async function DashboardPage() {
   const userId = await requireUserId();
+
+  const [me] = await db
+    .select({ timezone: users.timezone })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const tz = me?.timezone ?? "UTC";
 
   const memberships = await db
     .select({
@@ -65,7 +74,8 @@ export default async function DashboardPage() {
         .where(eq(dailyCheckins.userId, userId))
     : [];
 
-  const todayIso = await resolveToday("UTC");
+  const todayIso = await resolveToday(tz);
+  const graceCutoffIso = await resolveGraceCutoff(tz);
   const started = hasChallengeStarted(todayIso);
   const over = isChallengeOver(todayIso);
 
@@ -94,6 +104,7 @@ export default async function DashboardPage() {
       })),
       strikeLimit: m.group.strikeLimit,
       todayIso,
+      graceCutoffIso,
       redemptionStartedOn: pledge?.redemptionStartedOn ?? null,
       redeemedStrikeLimit: pledge?.redeemedStrikeLimit ?? null,
     });
