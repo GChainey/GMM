@@ -16,6 +16,17 @@ export const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
+    date: "2026-05-02",
+    title: "A herald's parchment crowns each pantheon — the day's reckoning at a glance",
+    items: [
+      "Each pantheon now opens with a herald's parchment that proclaims, in a single look, the day of the ritual, the pantheon's standing thus far, and which mortals have already made today's offering.",
+      "Beneath the headline are two rolls of headshots: the kept — wreathed in gilt with a quiet ✓ at their shoulder — and the awaited, set apart in muted greyscale until they too have inscribed the day's rites. The visages are drawn from each mortal's own visage, be it an uploaded portrait or their summoned face.",
+      "A pair of quiet bars charts the pantheon's progress: the gilded one shows the share of all daily rites kept across days already past, and the slimmer azure one tracks how far the month itself hath run.",
+      "On the dawn of the ritual, when no day is yet past, the herald withholds the standing-bar (lest it shame mortals for a day still in motion) and shows only the day-tally and today's two rolls of names.",
+      "Mortals whose vow holds only weekly tallies or monthly totals are noted at the foot — they are not reckoned by the day, and so do not loiter in the awaited column.",
+    ],
+  },
+  {
     date: "2026-05-01",
     title: "The altar is the first screen — and the day is sealed with a benediction",
     items: [
