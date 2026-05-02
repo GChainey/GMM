@@ -6,6 +6,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-05-02",
+    title: "The shareable parchment finds its temperance",
+    items: [
+      "The four hero cards atop the pantheon roundup — Ascending, Penitent, Ascended, Fallen — no longer shout in four different tints. Each now rests on the same calm parchment as its fellows, distinguished only by a slim coloured stripe down its left edge, that the eye may glide along the row and settle upon the numbers themselves.",
+      "The labels still wear the colour of their order, so a swift glance still tells which is which; but the saturated washes that once flooded each card are gone, and the count beneath now reads in the steady ink of the parchment.",
+    ],
+  },
+  {
     date: "2026-05-01",
     title: "The altar is the first screen — and the day is sealed with a benediction",
     items: [

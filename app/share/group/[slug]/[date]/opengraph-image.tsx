@@ -143,10 +143,10 @@ export default async function OgGroupRoundupImage({ params }: Props) {
             marginTop: 16,
           }}
         >
-          <Pill label="Ascending" count={ascendingCount} color={PALETTE.divine} bg={PALETTE.divineSoft} />
-          <Pill label="Penitent" count={penitentCount} color={PALETTE.penitent} bg={PALETTE.penitentSoft} />
-          <Pill label="Ascended" count={ascendedCount} color={PALETTE.ascended} bg={PALETTE.ascendedSoft} />
-          <Pill label="Fallen" count={fallenCount} color={PALETTE.fallen} bg={PALETTE.fallenSoft} />
+          <Pill label="Ascending" count={ascendingCount} color={PALETTE.divine} />
+          <Pill label="Penitent" count={penitentCount} color={PALETTE.penitent} />
+          <Pill label="Ascended" count={ascendedCount} color={PALETTE.ascended} />
+          <Pill label="Fallen" count={fallenCount} color={PALETTE.fallen} />
         </div>
 
         {/* Body */}
@@ -401,12 +401,10 @@ function Pill({
   label,
   count,
   color,
-  bg,
 }: {
   label: string;
   count: number;
   color: string;
-  bg: string;
 }) {
   return (
     <div
@@ -414,9 +412,10 @@ function Pill({
         display: "flex",
         flexDirection: "column",
         flex: 1,
-        padding: "10px 16px",
-        backgroundColor: bg,
-        border: `1px solid ${color}55`,
+        padding: "10px 14px",
+        backgroundColor: PALETTE.bgInner,
+        border: `1px solid ${PALETTE.border}`,
+        borderLeft: `3px solid ${color}`,
         borderRadius: 4,
       }}
     >
@@ -436,7 +435,7 @@ function Pill({
           display: "flex",
           fontSize: 28,
           fontWeight: 600,
-          color,
+          color: PALETTE.fg,
           marginTop: 2,
         }}
       >
