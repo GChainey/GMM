@@ -21,6 +21,7 @@ import {
 } from "@/lib/status";
 import {
   challengeDates,
+  challengeDayNumber,
   hasChallengeStarted,
   isChallengeOver,
   resolveToday,
@@ -34,6 +35,10 @@ import { OutcomeBlock } from "@/components/outcome-block";
 import { RedemptionBanner } from "@/components/redemption-banner";
 import { Settings, Share2, Shuffle } from "lucide-react";
 import { SwapControls } from "@/components/swap-controls";
+import {
+  PantheonHero,
+  type PantheonHeroMember,
+} from "@/components/pantheon-hero";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -189,6 +194,86 @@ export default async function PantheonPage({ params }: PageProps) {
     .filter((m) => !acceptedPartnerByUser.has(m.user.id))
     .map((m) => ({ userId: m.user.id, displayName: m.user.displayName }));
 
+  const memberData = memberRows.map(({ user, membership }) => {
+    const pledge = allPledges.find((p) => p.userId === user.id);
+    const acts = pledge
+      ? allActivities.filter((a) => a.pledgeId === pledge.id)
+      : [];
+    const checks = allCheckins
+      .filter((c) => acts.some((a) => a.id === c.activityId))
+      .map((c) => ({
+        activityId: c.activityId,
+        date: typeof c.date === "string" ? c.date : String(c.date),
+        completed: c.completed,
+        amount: c.amount,
+      }));
+    const actLite = acts.map((a) => ({
+      id: a.id,
+      kind:
+        (a.kind as
+          | "do"
+          | "abstain"
+          | "weekly_tally"
+          | "monthly_total") ?? "do",
+      targetAmount: a.targetAmount,
+      redeemedTargetAmount: a.redeemedTargetAmount,
+    }));
+    const status = computeStatus({
+      activities: actLite,
+      checkins: checks,
+      strikeLimit: group.strikeLimit,
+      todayIso,
+      redemptionStartedOn: pledge?.redemptionStartedOn ?? null,
+      redeemedStrikeLimit: pledge?.redeemedStrikeLimit ?? null,
+    });
+    const cells = buildCells(actLite, checks, todayIso);
+    return { user, membership, pledge, acts, actLite, status, cells };
+  });
+
+  const heroMembers: PantheonHeroMember[] = memberData.map(
+    ({ user, actLite, cells }) => {
+      const hasDaily = actLite.some(
+        (a) => a.kind === "do" || a.kind === "abstain",
+      );
+      const todayCell = cells.get(todayIso);
+      const todayState: PantheonHeroMember["todayState"] = !hasDaily
+        ? "no-rites"
+        : todayCell?.state === "done"
+          ? "done"
+          : "pending";
+      return {
+        id: user.id,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+        customization: {
+          faceStyle: user.faceStyle,
+          faceColor: user.faceColor,
+          faceGaze: user.faceGaze,
+          faceDepth: user.faceDepth,
+        },
+        todayState,
+      };
+    },
+  );
+
+  let ritesKept = 0;
+  let ritesPossible = 0;
+  for (const { actLite, cells } of memberData) {
+    const hasDaily = actLite.some(
+      (a) => a.kind === "do" || a.kind === "abstain",
+    );
+    if (!hasDaily) continue;
+    for (const date of dates) {
+      if (date >= todayIso) break;
+      const cell = cells.get(date);
+      if (!cell) continue;
+      ritesPossible += 1;
+      if (cell.state === "done") ritesKept += 1;
+    }
+  }
+
+  const dayNumber = challengeDayNumber(todayIso) ?? 0;
+
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-10 md:px-10">
       <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -291,6 +376,16 @@ export default async function PantheonPage({ params }: PageProps) {
         </div>
       </header>
 
+      <PantheonHero
+        dayNumber={dayNumber}
+        totalDays={dates.length}
+        ritesKept={ritesKept}
+        ritesPossible={ritesPossible}
+        members={heroMembers}
+        challengeStarted={challengeStarted}
+        challengeOver={challengeOver}
+      />
+
       {isMember && (
         <SwapControls
           slug={slug}
@@ -302,39 +397,7 @@ export default async function PantheonPage({ params }: PageProps) {
       )}
 
       <div className="flex flex-col gap-6">
-        {memberRows.map(({ user, membership }) => {
-          const pledge = allPledges.find((p) => p.userId === user.id);
-          const acts = pledge
-            ? allActivities.filter((a) => a.pledgeId === pledge.id)
-            : [];
-          const checks = allCheckins
-            .filter((c) => acts.some((a) => a.id === c.activityId))
-            .map((c) => ({
-              activityId: c.activityId,
-              date: typeof c.date === "string" ? c.date : String(c.date),
-              completed: c.completed,
-              amount: c.amount,
-            }));
-          const actLite = acts.map((a) => ({
-            id: a.id,
-            kind:
-              (a.kind as
-                | "do"
-                | "abstain"
-                | "weekly_tally"
-                | "monthly_total") ?? "do",
-            targetAmount: a.targetAmount,
-            redeemedTargetAmount: a.redeemedTargetAmount,
-          }));
-          const status = computeStatus({
-            activities: actLite,
-            checkins: checks,
-            strikeLimit: group.strikeLimit,
-            todayIso,
-            redemptionStartedOn: pledge?.redemptionStartedOn ?? null,
-            redeemedStrikeLimit: pledge?.redeemedStrikeLimit ?? null,
-          });
-          const cells = buildCells(actLite, checks, todayIso);
+        {memberData.map(({ user, membership, pledge, acts, status, cells }) => {
           const isMe = user.id === userId;
           const showRedemptionBanner = isMe && canSeekRedemption(status);
           const banner = showRedemptionBanner ? (() => {
