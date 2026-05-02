@@ -34,6 +34,10 @@ export interface ComputeStatusInput {
   checkins: CheckinLite[];
   strikeLimit: number;
   todayIso: string;
+  // Dates `< graceCutoffIso` are past (count as strikes / break streaks /
+  // trigger fall); dates `>= graceCutoffIso` are still editable in user
+  // terms. Defaults to `todayIso` (no grace) when omitted.
+  graceCutoffIso?: string;
   redemptionStartedOn?: string | null;
   redeemedStrikeLimit?: number | null;
 }
@@ -123,9 +127,11 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
     checkins,
     strikeLimit,
     todayIso,
+    graceCutoffIso,
     redemptionStartedOn,
     redeemedStrikeLimit,
   } = input;
+  const cutoffIso = graceCutoffIso ?? todayIso;
   const dates = challengeDates();
   const endIso = challengeEndIso();
   const totalChallengeDays = dates.length;
@@ -199,8 +205,10 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
     // Today is still in progress: don't count incomplete daily rites as
     // strikes, don't break the streak, and don't trip fall triggers until
     // the day is actually past. Running totals still update so today's
-    // tally inscriptions show in progress bars.
-    const isPastDay = date < todayIso;
+    // tally inscriptions show in progress bars. The grace cutoff extends
+    // this protection through noon (local) the day after — a date is only
+    // "past" once that lockout has flipped.
+    const isPastDay = date < cutoffIso;
 
     let allDone = true;
     for (const a of dailyActivities) {
@@ -397,7 +405,9 @@ export function buildCells(
   activities: ActivityLite[],
   checkins: CheckinLite[],
   todayIso: string,
+  graceCutoffIso?: string,
 ): Map<string, CellState> {
+  const cutoffIso = graceCutoffIso ?? todayIso;
   const cells = new Map<string, CellState>();
   const dailyIds = activities
     .filter((a) => a.kind === "do" || a.kind === "abstain")
@@ -421,7 +431,9 @@ export function buildCells(
           anyMissing = true;
         }
       }
-      if (date === todayIso && anyMissing) {
+      // Grace days (today and any pre-cutoff date still in the lockout
+      // window) show as pending while incomplete, not missed.
+      if (date >= cutoffIso && anyMissing) {
         state = "pending";
       } else if (!allDone) {
         state = "missed";
