@@ -3,6 +3,7 @@ import {
   formatShareDate,
   getPersonalDailyShareData,
 } from "@/lib/share-data";
+import { classifyProofUrl, isOgRenderableImage } from "@/lib/proof-media";
 
 export const alt = "Daily rite — God Mode May";
 export const size = { width: 1200, height: 630 };
@@ -73,6 +74,15 @@ export default async function OgDailyImage({ params }: Props) {
   })();
 
   const journalExcerpt = (journalBody || "").trim().slice(0, 240);
+  const renderablePhoto = photoUrl && isOgRenderableImage(photoUrl) ? photoUrl : null;
+  const proofKind = photoUrl ? classifyProofUrl(photoUrl) : "other";
+  const proofBadgeLabel = photoUrl && !renderablePhoto
+    ? proofKind === "video"
+      ? "A film of the rite is inscribed"
+      : proofKind === "audio"
+        ? "An audio relic is inscribed"
+        : "A relic is inscribed"
+    : null;
 
   return new ImageResponse(
     (
@@ -414,7 +424,7 @@ export default async function OgDailyImage({ params }: Props) {
               gap: 16,
             }}
           >
-            {photoUrl ? (
+            {renderablePhoto ? (
               <div
                 style={{
                   display: "flex",
@@ -427,7 +437,7 @@ export default async function OgDailyImage({ params }: Props) {
                 }}
               >
                 <img
-                  src={photoUrl}
+                  src={renderablePhoto}
                   alt="proof of rite"
                   width={380}
                   height={380}
@@ -503,6 +513,23 @@ export default async function OgDailyImage({ params }: Props) {
                     );
                   })}
                 </div>
+                {proofBadgeLabel && (
+                  <div
+                    style={{
+                      display: "flex",
+                      marginTop: 16,
+                      padding: "6px 12px",
+                      borderRadius: 4,
+                      border: `1px solid ${PALETTE.gold}66`,
+                      backgroundColor: PALETTE.goldSoft + "55",
+                      color: PALETTE.fg,
+                      fontSize: 13,
+                      fontStyle: "italic",
+                    }}
+                  >
+                    {proofBadgeLabel}
+                  </div>
+                )}
               </div>
             )}
             <div
@@ -514,7 +541,7 @@ export default async function OgDailyImage({ params }: Props) {
                 textTransform: "uppercase",
               }}
             >
-              {photoUrl ? "Proof of rite" : "Thirty-one days, May"}
+              {renderablePhoto ? "Proof of rite" : "Thirty-one days, May"}
             </div>
           </div>
         </div>

@@ -20,6 +20,13 @@ export function classifyProofUrl(url: string): ProofMediaKind {
   return "other";
 }
 
+// Satori (next/og) only decodes a narrow set of image formats. HEIC, video,
+// and audio URLs silently fail and leave a void where the image should be —
+// gate any <img> render on this.
+export function isOgRenderableImage(url: string): boolean {
+  return RENDERABLE_IMAGE_EXT.test(url);
+}
+
 export function isAcceptedProofType(file: File): boolean {
   if (file.type) {
     if (
