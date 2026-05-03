@@ -7,6 +7,17 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-03",
+    title: "Tonight's keepsake — the pantheon crowns its proof",
+    items: [
+      "The hero photo atop the dusk parchment is no longer the chance pick of whichever mortal first lifted the quill. It is now the proof that the pantheon itself has crowned: the most-honoured image of the day. Each mortal carries one heart per dusk, given to the proof that moved them most; the heart may be withdrawn or moved at any hour before the day rolls over.",
+      "Beneath every image proof in the gallery sits its tally — a small heart and number — so the mortals may see at a glance which witness the order is gathering around. A running count of votes cast hangs above the gallery; ties are settled by the earliest hand to inscribe.",
+      "Every image proof now opens within the temple itself: a tap upon the thumbnail rises a darkened parchment bearing the full witness, the bearer's name and the rite it stands for, and an Honor button that joins thy heart to the pantheon's reckoning. Arrow keys and side-glyphs step from one proof to the next, that thou mayst hold court without leaving the page.",
+      "The collective post is now words alone — the day's image is chosen by the pantheon, not by the post-bearer. A scribe still inscribes and amends the parchment, but the keepsake above answers to the order, not the pen.",
+      "Quietly: the photo column is removed from the day's parchment table, and a new ledger — group_proof_votes — keeps every honour bestowed, one-per-mortal-per-pantheon-per-day, with cascading erasure when a checkin or member departs.",
+    ],
+  },
+  {
+    date: "2026-05-03",
     title: "An unseen scribe at the temple gate",
     items: [
       "A quiet scribe now stands at the threshold of every pantheon, marking only that a mortal passed through and which altar they sought. No name is taken, no rite is read, no words are copied — only the footfall, that the keepers of the order may know which halls are most trodden and which lie still.",

@@ -1,27 +1,48 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useOptimistic,
+  useState,
+  useTransition,
+} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { upload } from "@vercel/blob/client";
 import { toast } from "sonner";
-import { Camera, FileVideo, Music, Pencil, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Crown,
+  FileVideo,
+  Heart,
+  Music,
+  Pencil,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user-avatar";
-import { saveCollectivePostAction } from "@/app/(app)/groups/[slug]/recap-actions";
 import {
-  MAX_PROOF_BYTES,
-  PROOF_ACCEPT,
-  classifyProofUrl,
-  isAcceptedProofType,
-} from "@/lib/proof-media";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  castProofVoteAction,
+  saveCollectivePostAction,
+} from "@/app/(app)/groups/[slug]/recap-actions";
+import { classifyProofUrl } from "@/lib/proof-media";
 import type { FaceCustomization } from "@/lib/face-config";
 import { cn } from "@/lib/utils";
 
 interface MemberPhoto {
+  checkinId: string;
   url: string;
   activityLabel: string;
+  voteCount: number;
+  hasMyVote: boolean;
 }
 
 export interface RecapMember {
@@ -34,7 +55,6 @@ export interface RecapMember {
 
 export interface CollectivePostState {
   body: string;
-  photoUrl: string | null;
   author: {
     userId: string;
     displayName: string;
@@ -55,33 +75,53 @@ interface PantheonDailyRecapProps {
   initialPost: CollectivePostState;
 }
 
-const MULTIPART_THRESHOLD = 5 * 1024 * 1024;
-
-async function uploadCollectivePostMedia(
-  groupId: string,
-  date: string,
-  file: File,
-): Promise<string> {
-  const ext = (file.name.split(".").pop() ?? "bin").toLowerCase();
-  const pathname = `collective/${groupId}/${date}-${Date.now()}.${ext}`;
-  const blob = await upload(pathname, file, {
-    access: "public",
-    handleUploadUrl: "/api/upload/collective-post",
-    contentType: file.type || undefined,
-    multipart: file.size > MULTIPART_THRESHOLD,
-    clientPayload: JSON.stringify({ groupId, date }),
-  });
-  return blob.url;
+interface FlatProof {
+  checkinId: string;
+  url: string;
+  activityLabel: string;
+  voteCount: number;
+  hasMyVote: boolean;
+  member: {
+    userId: string;
+    displayName: string;
+    avatarUrl: string | null;
+    customization: Partial<FaceCustomization>;
+  };
 }
 
-function MediaThumb({ url, size }: { url: string; size: number }) {
+function ProofMediaThumb({
+  url,
+  size,
+  onOpen,
+}: {
+  url: string;
+  size: number;
+  onOpen?: () => void;
+}) {
   const kind = classifyProofUrl(url);
+  if (kind === "image" && onOpen) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="relative block overflow-hidden rounded-md border border-gold/40 transition hover:border-gold"
+        style={{ width: size, height: size }}
+        aria-label="Open proof"
+      >
+        <Image
+          src={url}
+          alt="proof"
+          fill
+          sizes={`${size}px`}
+          className="object-cover"
+          unoptimized
+        />
+      </button>
+    );
+  }
   if (kind === "image") {
     return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer"
+      <span
         className="relative block overflow-hidden rounded-md border border-gold/40"
         style={{ width: size, height: size }}
       >
@@ -93,7 +133,7 @@ function MediaThumb({ url, size }: { url: string; size: number }) {
           className="object-cover"
           unoptimized
         />
-      </a>
+      </span>
     );
   }
   const Icon = kind === "video" ? FileVideo : Music;
@@ -124,75 +164,122 @@ export function PantheonDailyRecap({
   initialPost,
 }: PantheonDailyRecapProps) {
   const [post, setPost] = useState<CollectivePostState>(initialPost);
-  const hasPost =
-    post.body.trim().length > 0 || Boolean(post.photoUrl) || Boolean(post.author);
+  const hasPost = post.body.trim().length > 0 || Boolean(post.author);
   const [isEditing, setEditing] = useState(!hasPost && isMember);
   const [draftBody, setDraftBody] = useState(post.body);
-  const [draftPhotoUrl, setDraftPhotoUrl] = useState<string | null>(
-    post.photoUrl,
-  );
-  const [isUploading, setUploading] = useState(false);
   const [isSaving, startSaving] = useTransition();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [, startVoting] = useTransition();
 
-  const membersWithPhotos = members.filter((m) => m.photos.length > 0);
-  const otherMembers = members.filter((m) => m.photos.length === 0);
+  const [optimisticProofs, applyOptimisticVote] = useOptimistic(
+    members,
+    (state: RecapMember[], checkinId: string) => {
+      const wasVoted =
+        state.flatMap((m) => m.photos).find((p) => p.checkinId === checkinId)
+          ?.hasMyVote ?? false;
+      return state.map((m) => ({
+        ...m,
+        photos: m.photos.map((p) => {
+          if (p.checkinId === checkinId) {
+            return wasVoted
+              ? {
+                  ...p,
+                  hasMyVote: false,
+                  voteCount: Math.max(0, p.voteCount - 1),
+                }
+              : { ...p, hasMyVote: true, voteCount: p.voteCount + 1 };
+          }
+          if (!wasVoted && p.hasMyVote) {
+            return {
+              ...p,
+              hasMyVote: false,
+              voteCount: Math.max(0, p.voteCount - 1),
+            };
+          }
+          return p;
+        }),
+      }));
+    },
+  );
+
+  const flatProofs = useMemo<FlatProof[]>(
+    () =>
+      optimisticProofs.flatMap((m) =>
+        m.photos
+          .filter((p) => classifyProofUrl(p.url) === "image")
+          .map((p) => ({
+            checkinId: p.checkinId,
+            url: p.url,
+            activityLabel: p.activityLabel,
+            voteCount: p.voteCount,
+            hasMyVote: p.hasMyVote,
+            member: {
+              userId: m.userId,
+              displayName: m.displayName,
+              avatarUrl: m.avatarUrl,
+              customization: m.customization,
+            },
+          })),
+      ),
+    [optimisticProofs],
+  );
+
+  // Hero recomputed from optimistic state so a fresh vote can flip the crown
+  // before the server round-trip lands. flatProofs preserves server-side
+  // createdAt ordering, so first-found at the max count is the tie-break winner.
+  const optimisticHero = useMemo(() => {
+    let bestId: string | null = null;
+    let bestCount = 0;
+    for (const p of flatProofs) {
+      if (p.voteCount > bestCount) {
+        bestCount = p.voteCount;
+        bestId = p.checkinId;
+      }
+    }
+    return bestId;
+  }, [flatProofs]);
+
+  const heroProof = optimisticHero
+    ? flatProofs.find((p) => p.checkinId === optimisticHero) ?? null
+    : null;
+
+  const optimisticTotalVotes = useMemo(
+    () => flatProofs.reduce((acc, p) => acc + p.voteCount, 0),
+    [flatProofs],
+  );
+
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const lightboxOpen = lightboxIndex !== null;
+
+  function openLightbox(checkinId: string) {
+    const idx = flatProofs.findIndex((p) => p.checkinId === checkinId);
+    if (idx >= 0) setLightboxIndex(idx);
+  }
+
+  const membersWithPhotos = optimisticProofs.filter((m) => m.photos.length > 0);
+  const otherMembers = optimisticProofs.filter((m) => m.photos.length === 0);
 
   function startEdit() {
     setDraftBody(post.body);
-    setDraftPhotoUrl(post.photoUrl);
     setEditing(true);
   }
 
   function cancelEdit() {
     if (!hasPost) return;
     setDraftBody(post.body);
-    setDraftPhotoUrl(post.photoUrl);
     setEditing(false);
-  }
-
-  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > MAX_PROOF_BYTES) {
-      toast.error("That offering is over 50 MB. Try a smaller one.");
-      return;
-    }
-    if (!isAcceptedProofType(file)) {
-      toast.error("Only images, video, or audio may grace the recap.");
-      return;
-    }
-    setUploading(true);
-    try {
-      const url = await uploadCollectivePostMedia(groupId, date, file);
-      setDraftPhotoUrl(url);
-      toast.success("Relic attached");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Upload failed";
-      toast.error(msg);
-    } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
   }
 
   function save() {
     const trimmed = draftBody.trim();
-    if (trimmed.length === 0 && !draftPhotoUrl) {
-      toast.error("A recap needs words or a relic.");
+    if (trimmed.length === 0) {
+      toast.error("A recap needs words.");
       return;
     }
     startSaving(async () => {
       try {
-        await saveCollectivePostAction({
-          groupId,
-          date,
-          body: trimmed,
-          photoUrl: draftPhotoUrl,
-        });
+        await saveCollectivePostAction({ groupId, date, body: trimmed });
         setPost((prev) => ({
           body: trimmed,
-          photoUrl: draftPhotoUrl,
           author: {
             userId: currentUserId,
             displayName: prev.author?.userId === currentUserId
@@ -219,21 +306,10 @@ export function PantheonDailyRecap({
 
   function clearAll() {
     setDraftBody("");
-    setDraftPhotoUrl(null);
     startSaving(async () => {
       try {
-        await saveCollectivePostAction({
-          groupId,
-          date,
-          body: "",
-          photoUrl: null,
-        });
-        setPost({
-          body: "",
-          photoUrl: null,
-          author: null,
-          updatedAt: null,
-        });
+        await saveCollectivePostAction({ groupId, date, body: "" });
+        setPost({ body: "", author: null, updatedAt: null });
         toast.success("Recap cleared");
         setEditing(true);
       } catch (err) {
@@ -242,6 +318,44 @@ export function PantheonDailyRecap({
       }
     });
   }
+
+  function vote(checkinId: string) {
+    if (!isMember) {
+      toast.error("Take the vow to vote.");
+      return;
+    }
+    startVoting(async () => {
+      applyOptimisticVote(checkinId);
+      try {
+        await castProofVoteAction({ groupId, date, checkinId });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Could not vote";
+        toast.error(msg);
+      }
+    });
+  }
+
+  const step = useCallback(
+    (delta: number) => {
+      setLightboxIndex((idx) => {
+        if (idx === null || flatProofs.length === 0) return idx;
+        return (idx + delta + flatProofs.length) % flatProofs.length;
+      });
+    },
+    [flatProofs.length],
+  );
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowRight") step(1);
+      else if (e.key === "ArrowLeft") step(-1);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxOpen, step]);
+
+  const activeProof = lightboxIndex !== null ? flatProofs[lightboxIndex] : null;
 
   return (
     <section className="marble-card flex flex-col gap-5 rounded-md border border-gold/40 bg-gold/[0.04] p-5">
@@ -268,7 +382,74 @@ export function PantheonDailyRecap({
         </Button>
       </header>
 
-      {/* Collective post */}
+      {/* Tonight's keepsake — voted hero */}
+      {heroProof ? (
+        <div className="flex flex-col gap-3 rounded-md border border-gold/50 bg-gold/[0.06] p-4 md:flex-row">
+          <button
+            type="button"
+            onClick={() => openLightbox(heroProof.checkinId)}
+            className="relative aspect-square w-full max-w-xs overflow-hidden rounded-md border border-gold/40 transition hover:border-gold md:flex-shrink-0"
+            aria-label="Open keepsake"
+          >
+            <Image
+              src={heroProof.url}
+              alt="keepsake"
+              fill
+              sizes="(min-width: 768px) 320px, 100vw"
+              className="object-cover"
+              unoptimized
+            />
+          </button>
+          <div className="flex flex-col justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <p className="inline-flex items-center gap-2 font-display text-[0.65rem] uppercase tracking-[0.3em] text-gold">
+                <Crown className="h-3 w-3" /> Tonight&apos;s keepsake
+              </p>
+              <p className="font-display text-lg tracking-tight">
+                {heroProof.member.displayName} — {heroProof.activityLabel}
+              </p>
+              <p className="text-xs italic text-muted-foreground">
+                Crowned by {heroProof.voteCount} vote
+                {heroProof.voteCount === 1 ? "" : "s"} of the pantheon.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <UserAvatar
+                name={heroProof.member.displayName}
+                src={heroProof.member.avatarUrl}
+                size={28}
+                customization={heroProof.member.customization}
+              />
+              <Button
+                type="button"
+                variant={heroProof.hasMyVote ? "default" : "outline"}
+                size="sm"
+                onClick={() => vote(heroProof.checkinId)}
+                disabled={!isMember}
+                className={cn(
+                  "font-display tracking-widest",
+                  heroProof.hasMyVote && "gilded",
+                )}
+              >
+                <Heart
+                  className={cn(
+                    "mr-2 h-3 w-3",
+                    heroProof.hasMyVote && "fill-current",
+                  )}
+                />
+                {heroProof.hasMyVote ? "Honored" : "Honor"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : flatProofs.length > 0 ? (
+        <p className="rounded-md border border-dashed border-gold/40 bg-gold/[0.03] p-3 text-sm italic text-muted-foreground">
+          No votes cast yet — honor a proof below to crown tonight&apos;s
+          keepsake.
+        </p>
+      ) : null}
+
+      {/* Collective post (body-only) */}
       <div className="rounded-md border border-border/60 bg-background/40 p-4">
         <p className="font-display text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
           Collective post
@@ -318,11 +499,6 @@ export function PantheonDailyRecap({
                 {post.body}
               </p>
             )}
-            {post.photoUrl && (
-              <div className="self-start">
-                <MediaThumb url={post.photoUrl} size={220} />
-              </div>
-            )}
           </div>
         )}
 
@@ -354,77 +530,40 @@ export function PantheonDailyRecap({
               maxLength={1500}
               className="min-h-[6rem]"
             />
-            <div className="flex flex-wrap items-center gap-2">
-              {draftPhotoUrl && (
-                <div className="relative">
-                  <MediaThumb url={draftPhotoUrl} size={64} />
-                  <button
-                    type="button"
-                    onClick={() => setDraftPhotoUrl(null)}
-                    className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border border-border bg-background text-xs text-muted-foreground hover:text-foreground"
-                    aria-label="Remove relic"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              )}
-              <input
-                ref={fileRef}
-                type="file"
-                accept={PROOF_ACCEPT}
-                className="hidden"
-                onChange={onPickFile}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isUploading}
-                onClick={() => fileRef.current?.click()}
-                className="font-display tracking-widest"
-              >
-                <Camera className="mr-2 h-4 w-4" />
-                {isUploading
-                  ? "Inscribing…"
-                  : draftPhotoUrl
-                    ? "Replace relic"
-                    : "Attach relic"}
-              </Button>
-              <div className="ml-auto flex flex-wrap items-center gap-2">
-                {hasPost && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={cancelEdit}
-                    disabled={isSaving}
-                    className="font-display tracking-widest"
-                  >
-                    Cancel
-                  </Button>
-                )}
-                {hasPost && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearAll}
-                    disabled={isSaving}
-                    className="font-display tracking-widest text-fallen hover:text-fallen"
-                  >
-                    Clear
-                  </Button>
-                )}
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {hasPost && (
                 <Button
                   type="button"
+                  variant="ghost"
                   size="sm"
-                  onClick={save}
-                  disabled={isSaving || isUploading}
-                  className="gilded font-display tracking-widest"
+                  onClick={cancelEdit}
+                  disabled={isSaving}
+                  className="font-display tracking-widest"
                 >
-                  {isSaving ? "Inscribing…" : "Inscribe"}
+                  Cancel
                 </Button>
-              </div>
+              )}
+              {hasPost && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAll}
+                  disabled={isSaving}
+                  className="font-display tracking-widest text-fallen hover:text-fallen"
+                >
+                  Clear
+                </Button>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                onClick={save}
+                disabled={isSaving}
+                className="gilded font-display tracking-widest"
+              >
+                {isSaving ? "Inscribing…" : "Inscribe"}
+              </Button>
             </div>
           </div>
         )}
@@ -438,9 +577,17 @@ export function PantheonDailyRecap({
 
       {/* Per-member proof gallery */}
       <div className="flex flex-col gap-3">
-        <p className="font-display text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
-          Proofs of the day
-        </p>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="font-display text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
+            Proofs of the day
+          </p>
+          {flatProofs.length > 0 && (
+            <p className="text-[0.65rem] uppercase tracking-widest text-muted-foreground">
+              {optimisticTotalVotes} vote
+              {optimisticTotalVotes === 1 ? "" : "s"} cast
+            </p>
+          )}
+        </div>
         {membersWithPhotos.length === 0 ? (
           <p className="text-sm italic text-muted-foreground">
             No proofs inscribed yet today.
@@ -462,15 +609,46 @@ export function PantheonDailyRecap({
                   {m.displayName}
                 </p>
                 <div className="ml-auto flex flex-wrap items-center gap-2">
-                  {m.photos.map((p, idx) => (
-                    <div
-                      key={`${p.url}-${idx}`}
-                      title={p.activityLabel}
-                      className="flex flex-col items-center gap-1"
-                    >
-                      <MediaThumb url={p.url} size={64} />
-                    </div>
-                  ))}
+                  {m.photos.map((p) => {
+                    const kind = classifyProofUrl(p.url);
+                    const isImage = kind === "image";
+                    return (
+                      <div
+                        key={p.checkinId}
+                        title={p.activityLabel}
+                        className="flex flex-col items-center gap-1"
+                      >
+                        <ProofMediaThumb
+                          url={p.url}
+                          size={64}
+                          onOpen={isImage ? () => openLightbox(p.checkinId) : undefined}
+                        />
+                        {isImage && (
+                          <button
+                            type="button"
+                            onClick={() => vote(p.checkinId)}
+                            disabled={!isMember}
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.65rem] uppercase tracking-widest transition",
+                              p.hasMyVote
+                                ? "border-gold bg-gold/15 text-gold"
+                                : "border-border/60 text-muted-foreground hover:border-gold/60 hover:text-gold",
+                              !isMember && "cursor-not-allowed opacity-60",
+                            )}
+                            aria-label={p.hasMyVote ? "Remove honor" : "Honor proof"}
+                          >
+                            <Heart
+                              className={cn(
+                                "h-3 w-3",
+                                p.hasMyVote && "fill-current",
+                              )}
+                            />
+                            {p.voteCount}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </li>
             ))}
@@ -490,6 +668,107 @@ export function PantheonDailyRecap({
           </p>
         )}
       </div>
+
+      {/* Lightbox */}
+      <Dialog
+        open={lightboxOpen}
+        onOpenChange={(open) => {
+          if (!open) setLightboxIndex(null);
+        }}
+      >
+        <DialogContent
+          className="max-w-3xl gap-3 bg-background/95 p-4 sm:max-w-3xl"
+          showCloseButton
+        >
+          <DialogTitle className="sr-only">
+            {activeProof
+              ? `${activeProof.member.displayName} — ${activeProof.activityLabel}`
+              : "Proof"}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Proof of the day — vote or step through with arrow keys.
+          </DialogDescription>
+          {activeProof && (
+            <div className="flex flex-col gap-3">
+              <div className="relative aspect-square w-full overflow-hidden rounded-md bg-black/40 sm:aspect-[4/3]">
+                <Image
+                  src={activeProof.url}
+                  alt={`${activeProof.member.displayName} — ${activeProof.activityLabel}`}
+                  fill
+                  sizes="(min-width: 768px) 720px, 100vw"
+                  className="object-contain"
+                  unoptimized
+                />
+                {flatProofs.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => step(-1)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full border border-border/60 bg-background/80 p-1.5 transition hover:bg-background"
+                      aria-label="Previous proof"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => step(1)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-border/60 bg-background/80 p-1.5 transition hover:bg-background"
+                      aria-label="Next proof"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <UserAvatar
+                  name={activeProof.member.displayName}
+                  src={activeProof.member.avatarUrl}
+                  size={32}
+                  customization={activeProof.member.customization}
+                />
+                <div className="flex flex-col">
+                  <p className="font-display text-sm tracking-tight">
+                    {activeProof.member.displayName}
+                  </p>
+                  <p className="text-[0.65rem] uppercase tracking-widest text-muted-foreground">
+                    {activeProof.activityLabel}
+                  </p>
+                </div>
+                <div className="ml-auto flex items-center gap-2">
+                  {flatProofs.length > 1 && lightboxIndex !== null && (
+                    <span className="text-[0.65rem] uppercase tracking-widest text-muted-foreground">
+                      {lightboxIndex + 1} / {flatProofs.length}
+                    </span>
+                  )}
+                  <Button
+                    type="button"
+                    variant={activeProof.hasMyVote ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => vote(activeProof.checkinId)}
+                    disabled={!isMember}
+                    className={cn(
+                      "font-display tracking-widest",
+                      activeProof.hasMyVote && "gilded",
+                    )}
+                  >
+                    <Heart
+                      className={cn(
+                        "mr-2 h-3 w-3",
+                        activeProof.hasMyVote && "fill-current",
+                      )}
+                    />
+                    {activeProof.hasMyVote ? "Honored" : "Honor"}
+                    <span className="ml-2 opacity-70">
+                      {activeProof.voteCount}
+                    </span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

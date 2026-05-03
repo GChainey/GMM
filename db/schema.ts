@@ -273,7 +273,6 @@ export const groupDailyPosts = pgTable(
       .references(() => groups.id, { onDelete: "cascade" }),
     date: date("date").notNull(),
     body: text("body").notNull().default(""),
-    photoUrl: text("photo_url"),
     authorUserId: text("author_user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -286,6 +285,34 @@ export const groupDailyPosts = pgTable(
   },
   (t) => [
     uniqueIndex("group_daily_posts_group_date_idx").on(t.groupId, t.date),
+  ],
+);
+
+export const groupProofVotes = pgTable(
+  "group_proof_votes",
+  {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    groupId: text("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    checkinId: text("checkin_id")
+      .notNull()
+      .references(() => dailyCheckins.id, { onDelete: "cascade" }),
+    voterUserId: text("voter_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("group_proof_votes_group_date_voter_idx").on(
+      t.groupId,
+      t.date,
+      t.voterUserId,
+    ),
+    index("group_proof_votes_group_date_idx").on(t.groupId, t.date),
   ],
 );
 
@@ -355,4 +382,5 @@ export type JournalEntry = typeof journalEntries.$inferSelect;
 export type PledgeOption = typeof pledgeOptions.$inferSelect;
 export type GoalSwap = typeof goalSwaps.$inferSelect;
 export type GroupDailyPost = typeof groupDailyPosts.$inferSelect;
+export type GroupProofVote = typeof groupProofVotes.$inferSelect;
 

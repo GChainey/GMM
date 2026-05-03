@@ -8,6 +8,7 @@ import {
   goalSwaps,
   groupDailyPosts,
   groupMemberships,
+  groupProofVotes,
   groups,
   pledgeOptions,
   pledges,
@@ -245,19 +246,47 @@ export default async function PantheonPage({ params }: PageProps) {
     return { user, membership, pledge, acts, actLite, status, cells };
   });
 
-  // Today's per-member rite photos and the collective post for the recap.
-  const todayCheckinsWithPhotos = allCheckins.filter(
-    (c) =>
-      c.photoUrl &&
-      ((typeof c.date === "string" ? c.date : String(c.date)) === todayIso),
-  );
+  // Today's per-member rite photos, votes for hero selection, and the collective post.
+  const todayCheckinsWithPhotos = allCheckins
+    .filter(
+      (c) =>
+        c.photoUrl &&
+        ((typeof c.date === "string" ? c.date : String(c.date)) === todayIso),
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
   const activityById = new Map(allActivities.map((a) => [a.id, a]));
+
+  const todayVotes = await db
+    .select()
+    .from(groupProofVotes)
+    .where(
+      and(
+        eq(groupProofVotes.groupId, group.id),
+        eq(groupProofVotes.date, todayIso),
+      ),
+    );
+  const voteCountByCheckin = new Map<string, number>();
+  for (const v of todayVotes) {
+    voteCountByCheckin.set(
+      v.checkinId,
+      (voteCountByCheckin.get(v.checkinId) ?? 0) + 1,
+    );
+  }
+  const myVoteCheckinId =
+    todayVotes.find((v) => v.voterUserId === userId)?.checkinId ?? null;
+
   const recapMembers: RecapMember[] = memberRows.map(({ user }) => {
     const photos = todayCheckinsWithPhotos
       .filter((c) => c.userId === user.id && c.photoUrl)
       .map((c) => ({
+        checkinId: c.id,
         url: c.photoUrl as string,
         activityLabel: activityById.get(c.activityId)?.label ?? "rite",
+        voteCount: voteCountByCheckin.get(c.id) ?? 0,
+        hasMyVote: myVoteCheckinId === c.id,
       }));
     return {
       userId: user.id,
@@ -289,7 +318,6 @@ export default async function PantheonPage({ params }: PageProps) {
   const collectivePost: CollectivePostState = collectivePostRow
     ? {
         body: collectivePostRow.body,
-        photoUrl: collectivePostRow.photoUrl,
         author: collectiveAuthor
           ? {
               userId: collectiveAuthor.id,
@@ -307,7 +335,7 @@ export default async function PantheonPage({ params }: PageProps) {
           ? collectivePostRow.updatedAt.toISOString()
           : null,
       }
-    : { body: "", photoUrl: null, author: null, updatedAt: null };
+    : { body: "", author: null, updatedAt: null };
 
   const heroMembers: PantheonHeroMember[] = memberData.map(
     ({ user, actLite, cells }) => {
