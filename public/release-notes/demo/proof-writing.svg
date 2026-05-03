@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Athena's hour of writing — video">
+  <defs>
+    <linearGradient id="desk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2c2017"/>
+      <stop offset="1" stop-color="#0f0a06"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="0.32" cy="0.4" r="0.42">
+      <stop offset="0" stop-color="#ffd99a" stop-opacity="0.85"/>
+      <stop offset="0.6" stop-color="#ffb766" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#ffb766" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#desk)"/>
+  <rect width="400" height="400" fill="url(#lamp)"/>
+  <!-- parchment -->
+  <g transform="translate(80,150) rotate(-4)">
+    <rect width="240" height="180" rx="2" fill="#f4e6c5"/>
+    <rect width="240" height="180" rx="2" fill="#000" opacity="0.05"/>
+    <g stroke="#7a5a30" stroke-width="1.2" opacity="0.55">
+      <line x1="20" y1="32" x2="220" y2="32"/>
+      <line x1="20" y1="52" x2="210" y2="52"/>
+      <line x1="20" y1="72" x2="180" y2="72"/>
+      <line x1="20" y1="92" x2="200" y2="92"/>
+      <line x1="20" y1="112" x2="160" y2="112"/>
+      <line x1="20" y1="132" x2="190" y2="132"/>
+    </g>
+  </g>
+  <!-- quill -->
+  <g transform="translate(240,160) rotate(20)" fill="#0d0703" stroke="#0d0703" stroke-width="1">
+    <path d="M0,0 L4,-90 L8,-90 L10,-2 Z" fill="#3b2a1a"/>
+    <path d="M0,0 L4,-90 Q14,-70 8,-30 Q4,-15 2,-2 Z" fill="#5a3a20" opacity="0.85"/>
+    <circle cx="5" cy="2" r="2.5" fill="#0a0703"/>
+  </g>
+  <!-- play overlay -->
+  <circle cx="200" cy="200" r="44" fill="#000" opacity="0.45"/>
+  <circle cx="200" cy="200" r="44" fill="none" stroke="#ffe6b3" stroke-width="2" opacity="0.85"/>
+  <path d="M188,180 L222,200 L188,220 Z" fill="#ffe6b3"/>
+</svg>

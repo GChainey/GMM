@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Check, FileVideo, Music } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -251,10 +252,29 @@ const RECAP_PROOFS: Array<{
   name: string;
   rite: string;
   kind: "image" | "video" | "audio";
+  src: string;
 }> = [
-  { id: "p1", name: "Apollo", rite: "5km run", kind: "image" },
-  { id: "p2", name: "Athena", rite: "Hour of writing", kind: "video" },
-  { id: "p3", name: "Hermes", rite: "Lyre practice", kind: "audio" },
+  {
+    id: "p1",
+    name: "Apollo",
+    rite: "5km run",
+    kind: "image",
+    src: "/release-notes/demo/proof-run.svg",
+  },
+  {
+    id: "p2",
+    name: "Athena",
+    rite: "Hour of writing",
+    kind: "video",
+    src: "/release-notes/demo/proof-writing.svg",
+  },
+  {
+    id: "p3",
+    name: "Hermes",
+    rite: "Lyre practice",
+    kind: "audio",
+    src: "/release-notes/demo/proof-lyre.svg",
+  },
 ];
 
 function DailyRecapDemo() {
@@ -276,7 +296,7 @@ function DailyRecapDemo() {
               key={p.id}
               className="flex flex-col gap-2 rounded-md border border-border/60 bg-background/40 p-3"
             >
-              <ProofTile kind={p.kind} />
+              <ProofTile kind={p.kind} src={p.src} alt={`${p.name} — ${p.rite}`} />
               <div>
                 <p className="font-display text-sm">{p.name}</p>
                 <p className="text-xs italic text-muted-foreground">
@@ -314,20 +334,31 @@ function DailyRecapDemo() {
   );
 }
 
-function ProofTile({ kind }: { kind: "image" | "video" | "audio" }) {
-  if (kind === "image") {
-    return (
-      <div className="aspect-square w-full rounded-md border border-gold/30 bg-gradient-to-br from-amber-100/40 via-amber-50/20 to-transparent" />
-    );
-  }
-  const Icon = kind === "video" ? FileVideo : Music;
-  const label = kind === "video" ? "Film" : "Song";
-  return (
-    <div className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-md border border-gold/30 bg-gold/10 text-gold/80">
-      <Icon className="h-6 w-6" />
-      <span className="font-display text-[0.6rem] uppercase tracking-[0.3em]">
-        {label}
+function ProofTile({
+  kind,
+  src,
+  alt,
+}: {
+  kind: "image" | "video" | "audio";
+  src: string;
+  alt: string;
+}) {
+  const badge =
+    kind === "image" ? null : (
+      <span className="absolute left-1.5 top-1.5 rounded-sm bg-black/60 px-1.5 py-0.5 font-display text-[0.55rem] uppercase tracking-[0.25em] text-white/85">
+        {kind === "video" ? "Film" : "Song"}
       </span>
+    );
+  return (
+    <div className="relative aspect-square w-full overflow-hidden rounded-md border border-gold/30 bg-card">
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="(max-width: 768px) 33vw, 200px"
+        className="object-cover"
+      />
+      {badge}
     </div>
   );
 }
