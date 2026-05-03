@@ -17,6 +17,16 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     date: "2026-05-03",
+    title: "A herald's hall opens beyond the gate — the release-notes square",
+    items: [
+      "A new public square — /release-notes — now stands beside the temple gate, that wanderers and Twitter pilgrims may behold each new feature without first taking the vow.",
+      "Every entry bears not a screenshot but the rite itself: the herald's parchment that crowns each pantheon, the benediction that rises when a day is sealed, the lockout-grace card that surfaces yesterday — each rendered live in the post, fed sample data, so the reader may try the very component they are reading about.",
+      "Five posts have been retroactively inscribed: the herald hero, the buttons-and-benediction altar, the noon lockout, the recap parchment, and the temple's many faces. Each post is its own page, with prev/next navigation and a Twitter-shaped tagline atop.",
+      "A small Release notes link now sits in the landing-page header, and the proxy welcomes the new path without authentication.",
+    ],
+  },
+  {
+    date: "2026-05-03",
     title: "The pantheon at dusk — every proof gathered, every word collected",
     items: [
       "Each pantheon now opens with a recap parchment that gathers the day's witnesses in one place: the proofs of rite that mortals have inscribed — image, film, or song — laid out beside their bearers, with the still-awaited noted at the foot.",

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Apollo's 5km run">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde7c6"/>
+      <stop offset="0.55" stop-color="#f4b78f"/>
+      <stop offset="1" stop-color="#a96a4a"/>
+    </linearGradient>
+    <linearGradient id="track" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a3725"/>
+      <stop offset="1" stop-color="#2c1a10"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.7" cy="0.35" r="0.18">
+      <stop offset="0" stop-color="#fff5d4" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#fff5d4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#sky)"/>
+  <rect width="400" height="400" fill="url(#sun)"/>
+  <circle cx="280" cy="140" r="28" fill="#fff7dd" opacity="0.85"/>
+  <path d="M0,260 L400,235 L400,400 L0,400 Z" fill="url(#track)"/>
+  <g stroke="#f4b78f" stroke-width="2" opacity="0.55">
+    <line x1="0" y1="282" x2="400" y2="262"/>
+    <line x1="0" y1="312" x2="400" y2="295"/>
+    <line x1="0" y1="346" x2="400" y2="332"/>
+  </g>
+  <!-- distant runner silhouette -->
+  <g fill="#1a0e08" transform="translate(150,210)">
+    <circle cx="22" cy="-6" r="6"/>
+    <path d="M16,0 Q22,-2 28,2 L34,14 Q36,20 30,22 L24,34 L20,34 L24,22 L18,14 L10,18 L8,14 L18,8 Z"/>
+    <path d="M18,22 L14,42 L18,42 L24,28 Z"/>
+    <path d="M30,2 L42,8 L40,12 L28,8 Z"/>
+  </g>
+  <!-- closer runner silhouette -->
+  <g fill="#0d0703" transform="translate(220,200) scale(1.6)">
+    <circle cx="22" cy="-6" r="7"/>
+    <path d="M16,0 Q22,-2 28,2 L34,16 Q36,22 30,24 L24,38 L20,38 L24,24 L18,16 L10,20 L8,14 L18,8 Z"/>
+    <path d="M18,24 L12,46 L17,46 L25,30 Z"/>
+    <path d="M30,2 L46,10 L43,15 L28,8 Z"/>
+  </g>
+  <!-- subtle film grain -->
+  <g opacity="0.08" fill="#fff">
+    <circle cx="40" cy="60" r="1"/>
+    <circle cx="120" cy="40" r="1"/>
+    <circle cx="220" cy="80" r="1"/>
+    <circle cx="340" cy="120" r="1"/>
+    <circle cx="60" cy="200" r="1"/>
+    <circle cx="180" cy="160" r="1"/>
+    <circle cx="320" cy="220" r="1"/>
+  </g>
+</svg>
