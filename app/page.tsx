@@ -10,9 +10,17 @@ export default async function LandingPage() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex items-center justify-between px-6 py-5 md:px-12">
-        <Link href="/" className="font-display text-xl tracking-[0.3em]">
-          G·M·M
-        </Link>
+        <div className="flex items-baseline gap-6">
+          <Link href="/" className="font-display text-xl tracking-[0.3em]">
+            G·M·M
+          </Link>
+          <Link
+            href="/release-notes"
+            className="hidden font-display text-xs uppercase tracking-[0.3em] text-muted-foreground hover:text-foreground sm:inline-block"
+          >
+            Release notes
+          </Link>
+        </div>
         <nav className="flex items-center gap-2">
           {userId ? (
             <Button asChild className="gilded font-display tracking-widest">

@@ -18,12 +18,30 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     date: "2026-05-03",
+    title: "An unseen scribe at the temple gate",
+    items: [
+      "A quiet scribe now stands at the threshold of every pantheon, marking only that a mortal passed through and which altar they sought. No name is taken, no rite is read, no words are copied — only the footfall, that the keepers of the order may know which halls are most trodden and which lie still.",
+      "Quietly: the @vercel/analytics scribe has been bound into the root layout. It tells the keepers nothing of who, only of where and how many — and stays silent until the dashboard's Analytics rite is itself enabled.",
+    ],
+  },
+  {
+    date: "2026-05-03",
     title: "A rite cannot strike thee before it was sworn",
     items: [
       "Thy daily rites now bear the date upon which they entered thy vow. The reckoning honours that mark: a day before a rite was sworn no longer counts as a missed offering, breaks no streak, and cannot of itself bring a mortal low. The rite begins where the rite was set down, not at the dawn of the month.",
       "Likewise, the weekly and monthly tallies hold their peace until the week or day in which they were inscribed — a tally pledged late shall not summon the falling-stone for a week that ended before it existed.",
       "The mosaic on the pantheon wall reads the same way: a cell from before a rite's first day is left untroubled rather than flushed crimson.",
       "Quietly: existing rites have been dated by the earliest record of their swearing in the pledge ledger, falling back to the day the pledge itself was first sealed.",
+    ],
+  },
+  {
+    date: "2026-05-03",
+    title: "A herald's hall opens beyond the gate — the release-notes square",
+    items: [
+      "A new public square — /release-notes — now stands beside the temple gate, that wanderers and Twitter pilgrims may behold each new feature without first taking the vow.",
+      "Every entry bears not a screenshot but the rite itself: the herald's parchment that crowns each pantheon, the benediction that rises when a day is sealed, the lockout-grace card that surfaces yesterday — each rendered live in the post, fed sample data, so the reader may try the very component they are reading about.",
+      "Five posts have been retroactively inscribed: the herald hero, the buttons-and-benediction altar, the noon lockout, the recap parchment, and the temple's many faces. Each post is its own page, with prev/next navigation and a Twitter-shaped tagline atop.",
+      "A small Release notes link now sits in the landing-page header, and the proxy welcomes the new path without authentication.",
     ],
   },
   {

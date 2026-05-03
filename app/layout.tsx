@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cinzel, Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { SoundProvider } from "@/components/sound-provider";
@@ -44,6 +45,7 @@ export default function RootLayout({
             </SoundProvider>
             <Toaster richColors closeButton position="top-center" />
           </ThemeProvider>
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
