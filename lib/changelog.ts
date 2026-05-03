@@ -7,6 +7,16 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-03",
+    title: "A rite cannot strike thee before it was sworn",
+    items: [
+      "Thy daily rites now bear the date upon which they entered thy vow. The reckoning honours that mark: a day before a rite was sworn no longer counts as a missed offering, breaks no streak, and cannot of itself bring a mortal low. The rite begins where the rite was set down, not at the dawn of the month.",
+      "Likewise, the weekly and monthly tallies hold their peace until the week or day in which they were inscribed — a tally pledged late shall not summon the falling-stone for a week that ended before it existed.",
+      "The mosaic on the pantheon wall reads the same way: a cell from before a rite's first day is left untroubled rather than flushed crimson.",
+      "Quietly: existing rites have been dated by the earliest record of their swearing in the pledge ledger, falling back to the day the pledge itself was first sealed.",
+    ],
+  },
+  {
+    date: "2026-05-03",
     title: "A herald's hall opens beyond the gate — the release-notes square",
     items: [
       "A new public square — /release-notes — now stands beside the temple gate, that wanderers and Twitter pilgrims may behold each new feature without first taking the vow.",

@@ -15,6 +15,7 @@ import {
 } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
 import {
+  activityCreatedOnIso,
   buildCells,
   canSeekRedemption,
   computeStatus,
@@ -228,6 +229,7 @@ export default async function PantheonPage({ params }: PageProps) {
           | "monthly_total") ?? "do",
       targetAmount: a.targetAmount,
       redeemedTargetAmount: a.redeemedTargetAmount,
+      createdOnIso: activityCreatedOnIso(a.createdAt),
     }));
     const graceCutoffIso = memberCutoff(user.timezone);
     const status = computeStatus({

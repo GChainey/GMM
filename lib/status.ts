@@ -20,6 +20,11 @@ export interface ActivityLite {
   kind: ActivityKind;
   targetAmount: number | null;
   redeemedTargetAmount?: number | null;
+  // ISO date (YYYY-MM-DD) on which this activity entered the pledge. Past
+  // dates earlier than this are not held against the user — the activity
+  // didn't exist yet, so it cannot count as a missed rite. Optional for
+  // back-compat; callers should pass it.
+  createdOnIso?: string | null;
 }
 
 export interface CheckinLite {
@@ -78,6 +83,15 @@ export interface WeeklyProgress {
   reached: boolean;
   isCurrent: boolean;
   isPast: boolean;
+}
+
+export function activityCreatedOnIso(
+  createdAt: Date | string | null | undefined,
+): string | null {
+  if (!createdAt) return null;
+  const d = createdAt instanceof Date ? createdAt : new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0, 10);
 }
 
 export const REDEMPTION_WINDOW_DAYS = 3;
@@ -191,7 +205,12 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
     for (const w of weeks) weeklyTotals.set(weeklyKey(a.id, w.index), 0);
   }
 
-  const totalSlots = dailyActivities.length * dates.length;
+  let totalSlots = 0;
+  for (const a of dailyActivities) {
+    for (const d of dates) {
+      if (!a.createdOnIso || a.createdOnIso <= d) totalSlots += 1;
+    }
+  }
   let evaluatedSlots = 0;
   let strikes = 0;
   let currentStreak = 0;
@@ -211,7 +230,11 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
     const isPastDay = date < cutoffIso;
 
     let allDone = true;
+    let anyDailyExisted = false;
     for (const a of dailyActivities) {
+      const existedOnDate = !a.createdOnIso || a.createdOnIso <= date;
+      if (!existedOnDate) continue;
+      anyDailyExisted = true;
       if (isPastDay) evaluatedSlots += 1;
       const done = completedLookup.get(`${a.id}::${date}`) === true;
       if (!done) {
@@ -219,7 +242,11 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
         allDone = false;
       }
     }
-    if (allDone) {
+    // Days before any daily rite existed shouldn't break a streak — the user
+    // had nothing to do. Treat them as neutral.
+    if (!anyDailyExisted) {
+      // pass through: neither break nor extend the streak
+    } else if (allDone) {
       runningStreak += 1;
       if (runningStreak > longestStreak) longestStreak = runningStreak;
     } else if (isPastDay) {
@@ -251,6 +278,7 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
         const dayNum = challengeDayNumber(date) ?? 0;
         if (dayNum >= TALLY_FALL_TRIGGER_MIN_DAY) {
           for (const a of monthlyActivities) {
+            if (a.createdOnIso && a.createdOnIso > date) continue;
             const target = effectiveTargetFor(a);
             if (target <= 0) continue;
             const expectedByNow = (dayNum / totalChallengeDays) * target;
@@ -267,6 +295,7 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
       // week that still has hours of mortal striving left.
       if (fallenOn === null && week && date === week.endIso) {
         for (const a of weeklyActivities) {
+          if (a.createdOnIso && a.createdOnIso > week.endIso) continue;
           const target = weeklyTargetForWeek(a, week.days);
           if (target <= 0) continue;
           const totalSoFar = weeklyTotals.get(weeklyKey(a.id, week.index)) ?? 0;
@@ -409,23 +438,26 @@ export function buildCells(
 ): Map<string, CellState> {
   const cutoffIso = graceCutoffIso ?? todayIso;
   const cells = new Map<string, CellState>();
-  const dailyIds = activities
-    .filter((a) => a.kind === "do" || a.kind === "abstain")
-    .map((a) => a.id);
+  const dailies = activities.filter(
+    (a) => a.kind === "do" || a.kind === "abstain",
+  );
   const lookup = new Map<string, boolean>();
   for (const c of checkins) lookup.set(`${c.activityId}::${c.date}`, c.completed);
 
   for (const date of challengeDates()) {
     let state: CellState["state"] = "done";
+    const activeOnDate = dailies.filter(
+      (a) => !a.createdOnIso || a.createdOnIso <= date,
+    );
     if (date > todayIso) {
       state = "future";
-    } else if (dailyIds.length === 0) {
+    } else if (activeOnDate.length === 0) {
       state = "done";
     } else {
       let allDone = true;
       let anyMissing = false;
-      for (const aid of dailyIds) {
-        const done = lookup.get(`${aid}::${date}`) === true;
+      for (const a of activeOnDate) {
+        const done = lookup.get(`${a.id}::${date}`) === true;
         if (!done) {
           allDone = false;
           anyMissing = true;

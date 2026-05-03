@@ -10,7 +10,7 @@ import {
   users,
 } from "@/db/schema";
 import { requireUserId } from "@/lib/auth";
-import { computeStatus } from "@/lib/status";
+import { activityCreatedOnIso, computeStatus } from "@/lib/status";
 import {
   challengeStartIso,
   hasChallengeStarted,
@@ -95,6 +95,7 @@ export default async function DashboardPage() {
           "do",
         targetAmount: a.targetAmount,
         redeemedTargetAmount: a.redeemedTargetAmount,
+        createdOnIso: activityCreatedOnIso(a.createdAt),
       })),
       checkins: checks.map((c) => ({
         activityId: c.activityId,
