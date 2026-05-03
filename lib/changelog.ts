@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-05-03",
+    title: "An unseen scribe at the temple gate",
+    items: [
+      "A quiet scribe now stands at the threshold of every pantheon, marking only that a mortal passed through and which altar they sought. No name is taken, no rite is read, no words are copied — only the footfall, that the keepers of the order may know which halls are most trodden and which lie still.",
+      "Quietly: the @vercel/analytics scribe has been bound into the root layout. It tells the keepers nothing of who, only of where and how many — and stays silent until the dashboard's Analytics rite is itself enabled.",
+    ],
+  },
+  {
+    date: "2026-05-03",
     title: "A rite cannot strike thee before it was sworn",
     items: [
       "Thy daily rites now bear the date upon which they entered thy vow. The reckoning honours that mark: a day before a rite was sworn no longer counts as a missed offering, breaks no streak, and cannot of itself bring a mortal low. The rite begins where the rite was set down, not at the dawn of the month.",
