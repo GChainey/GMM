@@ -16,7 +16,12 @@ import {
   type User,
 } from "@/db/schema";
 import { isChallengeDate } from "@/lib/dates";
-import { buildCells, computeStatus, type ComputedStatus } from "@/lib/status";
+import {
+  activityCreatedOnIso,
+  buildCells,
+  computeStatus,
+  type ComputedStatus,
+} from "@/lib/status";
 
 export const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -137,6 +142,7 @@ export async function getPersonalDailyShareData(
       (a.kind as "do" | "abstain" | "weekly_tally" | "monthly_total") ?? "do",
     targetAmount: a.targetAmount,
     redeemedTargetAmount: a.redeemedTargetAmount,
+    createdOnIso: activityCreatedOnIso(a.createdAt),
   }));
   const status = computeStatus({
     activities: actLite,
@@ -273,9 +279,10 @@ export async function getGroupRoundupShareData(
     const actLite = acts.map((a) => ({
       id: a.id,
       kind:
-      (a.kind as "do" | "abstain" | "weekly_tally" | "monthly_total") ?? "do",
+        (a.kind as "do" | "abstain" | "weekly_tally" | "monthly_total") ?? "do",
       targetAmount: a.targetAmount,
       redeemedTargetAmount: a.redeemedTargetAmount,
+      createdOnIso: activityCreatedOnIso(a.createdAt),
     }));
     const status = computeStatus({
       activities: actLite,

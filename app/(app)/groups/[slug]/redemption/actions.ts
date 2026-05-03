@@ -14,6 +14,7 @@ import {
   resolveToday,
 } from "@/lib/dates";
 import {
+  activityCreatedOnIso,
   canSeekRedemption,
   computeStatus,
   type ActivityLite,
@@ -75,6 +76,7 @@ export async function acceptSecondVowAction(input: { slug: string }) {
       (a.kind as "do" | "abstain" | "weekly_tally" | "monthly_total") ?? "do",
     targetAmount: a.targetAmount,
     redeemedTargetAmount: a.redeemedTargetAmount,
+    createdOnIso: activityCreatedOnIso(a.createdAt),
   }));
   const myChecks = checks
     .filter((c) => acts.some((a) => a.id === c.activityId))
