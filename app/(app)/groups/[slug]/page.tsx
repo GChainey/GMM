@@ -6,6 +6,7 @@ import {
   activities,
   dailyCheckins,
   goalSwaps,
+  groupDailyPosts,
   groupMemberships,
   groups,
   pledgeOptions,
@@ -41,6 +42,11 @@ import {
   PantheonHero,
   type PantheonHeroMember,
 } from "@/components/pantheon-hero";
+import {
+  PantheonDailyRecap,
+  type CollectivePostState,
+  type RecapMember,
+} from "@/components/pantheon-daily-recap";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -237,6 +243,70 @@ export default async function PantheonPage({ params }: PageProps) {
     return { user, membership, pledge, acts, actLite, status, cells };
   });
 
+  // Today's per-member rite photos and the collective post for the recap.
+  const todayCheckinsWithPhotos = allCheckins.filter(
+    (c) =>
+      c.photoUrl &&
+      ((typeof c.date === "string" ? c.date : String(c.date)) === todayIso),
+  );
+  const activityById = new Map(allActivities.map((a) => [a.id, a]));
+  const recapMembers: RecapMember[] = memberRows.map(({ user }) => {
+    const photos = todayCheckinsWithPhotos
+      .filter((c) => c.userId === user.id && c.photoUrl)
+      .map((c) => ({
+        url: c.photoUrl as string,
+        activityLabel: activityById.get(c.activityId)?.label ?? "rite",
+      }));
+    return {
+      userId: user.id,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+      customization: {
+        faceStyle: user.faceStyle,
+        faceColor: user.faceColor,
+        faceGaze: user.faceGaze,
+        faceDepth: user.faceDepth,
+      },
+      photos,
+    };
+  });
+
+  const [collectivePostRow] = await db
+    .select()
+    .from(groupDailyPosts)
+    .where(
+      and(
+        eq(groupDailyPosts.groupId, group.id),
+        eq(groupDailyPosts.date, todayIso),
+      ),
+    )
+    .limit(1);
+  const collectiveAuthor = collectivePostRow
+    ? memberRows.find((m) => m.user.id === collectivePostRow.authorUserId)?.user ?? null
+    : null;
+  const collectivePost: CollectivePostState = collectivePostRow
+    ? {
+        body: collectivePostRow.body,
+        photoUrl: collectivePostRow.photoUrl,
+        author: collectiveAuthor
+          ? {
+              userId: collectiveAuthor.id,
+              displayName: collectiveAuthor.displayName,
+              avatarUrl: collectiveAuthor.avatarUrl,
+              customization: {
+                faceStyle: collectiveAuthor.faceStyle,
+                faceColor: collectiveAuthor.faceColor,
+                faceGaze: collectiveAuthor.faceGaze,
+                faceDepth: collectiveAuthor.faceDepth,
+              },
+            }
+          : null,
+        updatedAt: collectivePostRow.updatedAt
+          ? collectivePostRow.updatedAt.toISOString()
+          : null,
+      }
+    : { body: "", photoUrl: null, author: null, updatedAt: null };
+
   const heroMembers: PantheonHeroMember[] = memberData.map(
     ({ user, actLite, cells }) => {
       const hasDaily = actLite.some(
@@ -392,6 +462,19 @@ export default async function PantheonPage({ params }: PageProps) {
         challengeStarted={challengeStarted}
         challengeOver={challengeOver}
       />
+
+      {challengeStarted && !challengeOver && (
+        <PantheonDailyRecap
+          slug={slug}
+          groupId={group.id}
+          groupName={group.name}
+          date={todayIso}
+          members={recapMembers}
+          isMember={isMember}
+          currentUserId={userId}
+          initialPost={collectivePost}
+        />
+      )}
 
       {isMember && (
         <SwapControls

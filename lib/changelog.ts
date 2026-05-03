@@ -6,6 +6,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-05-03",
+    title: "The pantheon at dusk — every proof gathered, every word collected",
+    items: [
+      "Each pantheon now opens with a recap parchment that gathers the day's witnesses in one place: the proofs of rite that mortals have inscribed — image, film, or song — laid out beside their bearers, with the still-awaited noted at the foot.",
+      "Beneath the gathering sits a collective post — a single parchment per pantheon per day where any mortal of the order may set down a few words for the whole, attach a relic if the day asks for one, and let the rest of the pantheon read it as they pass. The latest hand to touch it is named at the top, with the hour of inscription.",
+      "Should the day pass without a word, the parchment quietly invites one. Should a mortal wish to amend, the Amend button reopens the draft; should they wish to undo, Clear lifts both word and relic and returns the parchment to silence.",
+      "The shareable daily rite no longer leaves a void where a non-image relic was offered. Where a HEIC, a film, or a song stands as proof, the parchment now still bears the May progress mosaic and a small italicised note declaring that the relic is inscribed — rather than the empty box that quietly broke the share card before.",
+      "Quietly: a new vault path — collective/[pantheon]/[date] — accepts relics for the recap, gated to mortals of the pantheon and limited to the same fifty-megabyte bound as proof of rite.",
+    ],
+  },
+  {
     date: "2026-05-02",
     title: "The lockout flips at noon — yesterday lingers in grace",
     items: [
