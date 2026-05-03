@@ -138,6 +138,9 @@ export const activities = pgTable(
     outcomeText: text("outcome_text").notNull().default(""),
     outcomeAchievedAt: timestamp("outcome_achieved_at", { withTimezone: true }),
     redeemedTargetAmount: integer("redeemed_target_amount"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => [index("activities_pledge_idx").on(t.pledgeId)],
 );

@@ -18,6 +18,7 @@ import {
 } from "@/lib/dates";
 import {
   REDEMPTION_WINDOW_DAYS,
+  activityCreatedOnIso,
   addDaysIso,
   canSeekRedemption,
   computeStatus,
@@ -81,6 +82,7 @@ export default async function RedemptionPage({ params }: PageProps) {
       (a.kind as "do" | "abstain" | "weekly_tally" | "monthly_total") ?? "do",
     targetAmount: a.targetAmount,
     redeemedTargetAmount: a.redeemedTargetAmount,
+    createdOnIso: activityCreatedOnIso(a.createdAt),
   }));
   const myChecks = checks
     .filter((c) => acts.some((a) => a.id === c.activityId))
