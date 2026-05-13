@@ -19,6 +19,11 @@ const toggleSchema = z.object({
   completed: z.boolean(),
 });
 
+const clearSchema = z.object({
+  activityId: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
 const amountSchema = z.object({
   activityId: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -89,8 +94,37 @@ export async function toggleCheckinAction(input: {
   }
 
   revalidatePath("/check-in");
+  revalidatePath("/check-in/history");
   revalidatePath("/dashboard");
   // Pantheon pages also benefit; let Next.js revalidate when visited.
+}
+
+export async function clearCheckinAction(input: {
+  activityId: string;
+  date: string;
+}) {
+  const userId = await requireUserId();
+  await ensureUserRow();
+  const data = clearSchema.parse(input);
+
+  if (!isChallengeDate(data.date)) {
+    throw new Error("Only May dates may be marked.");
+  }
+  await ensureOwnership(data.activityId, userId);
+
+  await db
+    .delete(dailyCheckins)
+    .where(
+      and(
+        eq(dailyCheckins.userId, userId),
+        eq(dailyCheckins.activityId, data.activityId),
+        eq(dailyCheckins.date, data.date),
+      ),
+    );
+
+  revalidatePath("/check-in");
+  revalidatePath("/check-in/history");
+  revalidatePath("/dashboard");
 }
 
 const recordProofSchema = z.object({
@@ -153,6 +187,7 @@ export async function recordProofUploadAction(input: {
   }
 
   revalidatePath("/check-in");
+  revalidatePath("/check-in/history");
   revalidatePath("/dashboard");
   return { url: data.url };
 }

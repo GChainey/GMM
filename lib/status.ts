@@ -231,25 +231,33 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
 
     let allDone = true;
     let anyDailyExisted = false;
+    let anyExplicitNotDone = false;
     for (const a of dailyActivities) {
       const existedOnDate = !a.createdOnIso || a.createdOnIso <= date;
       if (!existedOnDate) continue;
       anyDailyExisted = true;
       if (isPastDay) evaluatedSlots += 1;
-      const done = completedLookup.get(`${a.id}::${date}`) === true;
-      if (!done) {
+      const entry = completedLookup.get(`${a.id}::${date}`);
+      // Only an explicit "did not do" inscription draws a strike. Forgetting
+      // to mark anything is now neutral — the mortal can catch up later via
+      // the history altar.
+      if (entry === false) {
         if (isPastDay) strikes += 1;
+        anyExplicitNotDone = true;
+        allDone = false;
+      } else if (entry !== true) {
         allDone = false;
       }
     }
-    // Days before any daily rite existed shouldn't break a streak — the user
-    // had nothing to do. Treat them as neutral.
+    // Days before any daily rite existed are neutral — nothing was owed.
+    // Past unmarked days are also neutral now: they neither break nor extend
+    // the streak. Only an explicit "did not do" resets the streak.
     if (!anyDailyExisted) {
-      // pass through: neither break nor extend the streak
+      // pass through
     } else if (allDone) {
       runningStreak += 1;
       if (runningStreak > longestStreak) longestStreak = runningStreak;
-    } else if (isPastDay) {
+    } else if (isPastDay && anyExplicitNotDone) {
       runningStreak = 0;
     }
     if (date === todayIso) currentStreak = runningStreak;
@@ -427,7 +435,10 @@ export function computeStatus(input: ComputeStatusInput): ComputedStatus {
 
 export interface CellState {
   date: string;
-  state: "future" | "pending" | "done" | "missed";
+  // "missed" now means an explicit "did not do" was inscribed (a strike).
+  // "unmarked" is a past day with no inscription either way — no strike,
+  // no streak break, but still surfaced so the mortal can catch up.
+  state: "future" | "pending" | "done" | "missed" | "unmarked";
 }
 
 export function buildCells(
@@ -456,19 +467,21 @@ export function buildCells(
     } else {
       let allDone = true;
       let anyMissing = false;
+      let anyExplicitNotDone = false;
       for (const a of activeOnDate) {
-        const done = lookup.get(`${a.id}::${date}`) === true;
-        if (!done) {
+        const entry = lookup.get(`${a.id}::${date}`);
+        if (entry !== true) {
           allDone = false;
           anyMissing = true;
         }
+        if (entry === false) anyExplicitNotDone = true;
       }
-      // Grace days (today and any pre-cutoff date still in the lockout
-      // window) show as pending while incomplete, not missed.
       if (date >= cutoffIso && anyMissing) {
         state = "pending";
-      } else if (!allDone) {
+      } else if (anyExplicitNotDone) {
         state = "missed";
+      } else if (!allDone) {
+        state = "unmarked";
       } else {
         state = "done";
       }

@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { PledgeRiteList, type RiteRowProps } from "@/components/pledge-rite-list";
 import { DayCelebrationProvider } from "@/components/day-celebration";
 import { JournalEntry } from "@/components/journal-entry";
-import { Share2, Shuffle } from "lucide-react";
+import { CalendarClock, Share2, Shuffle } from "lucide-react";
 
 export default async function CheckInPage() {
   const userId = await requireUserId();
@@ -219,7 +219,7 @@ export default async function CheckInPage() {
   const initialCompletedMap = Object.fromEntries(
     dailyRites.map((a) => [
       a.id,
-      checkinByActivity.get(a.id)?.completed ?? false,
+      checkinByActivity.get(a.id)?.completed === true,
     ]),
   );
 
@@ -335,16 +335,28 @@ export default async function CheckInPage() {
           </p>
         </div>
         {started && groupedByPledge.length > 0 && (
-          <Button
-            asChild
-            variant="outline"
-            className="font-display tracking-widest"
-          >
-            <Link href={`/share/daily/${userId}/${today}`}>
-              <Share2 className="h-4 w-4" />
-              Share today
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              asChild
+              variant="outline"
+              className="font-display tracking-widest"
+            >
+              <Link href="/check-in/history">
+                <CalendarClock className="h-4 w-4" />
+                Days past
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="font-display tracking-widest"
+            >
+              <Link href={`/share/daily/${userId}/${today}`}>
+                <Share2 className="h-4 w-4" />
+                Share today
+              </Link>
+            </Button>
+          </div>
         )}
       </header>
 
@@ -389,7 +401,7 @@ export default async function CheckInPage() {
                         description: a.description,
                         groupName,
                         date: yesterday,
-                        initialCompleted: c?.completed ?? false,
+                        initialCompleted: c ? c.completed : null,
                         initialAmount: c?.amount ?? null,
                         initialPhotoUrl: c?.photoUrl ?? null,
                         unit: a.unit,
@@ -516,7 +528,7 @@ export default async function CheckInPage() {
                       description: a.description,
                       groupName,
                       date: today,
-                      initialCompleted: c?.completed ?? false,
+                      initialCompleted: c ? c.completed : null,
                       initialAmount: c?.amount ?? null,
                       initialPhotoUrl: c?.photoUrl ?? null,
                       unit: a.unit,

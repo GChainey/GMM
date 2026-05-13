@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { Cinzel, Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
+import { DialRoot } from "dialkit";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { SoundProvider } from "@/components/sound-provider";
 import { FlavorInitScript, ThemeProvider } from "@/components/theme-provider";
+import "dialkit/styles.css";
 import "./globals.css";
 
 const display = Cinzel({
@@ -42,6 +44,7 @@ export default function RootLayout({
           <ThemeProvider>
             <SoundProvider>
               <TooltipProvider delay={150}>{children}</TooltipProvider>
+              <DialRoot />
             </SoundProvider>
             <Toaster richColors closeButton position="top-center" />
           </ThemeProvider>
