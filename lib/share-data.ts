@@ -41,7 +41,7 @@ export interface PersonalDailyShareData {
   rewardOptionLabel: string | null;
   punishmentOptionLabel: string | null;
   status: ComputedStatus;
-  cells: Map<string, { date: string; state: "future" | "pending" | "done" | "missed" }>;
+  cells: Map<string, { date: string; state: "future" | "pending" | "done" | "missed" | "unmarked" }>;
   date: string;
   doneToday: number;
   totalToday: number;

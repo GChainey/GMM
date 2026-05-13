@@ -12,8 +12,10 @@ import {
   FileVideo,
   Music,
   Image as ImageIcon,
+  X,
 } from "lucide-react";
 import {
+  clearCheckinAction,
   recordProofUploadAction,
   setAmountAction,
   toggleCheckinAction,
@@ -115,7 +117,9 @@ interface CheckinRowProps {
   description: string;
   groupName: string;
   date: string;
-  initialCompleted: boolean;
+  // null = no inscription either way (neutral); true = done; false = explicit
+  // "did not do" (the only state that draws a strike).
+  initialCompleted: boolean | null;
   initialAmount: number | null;
   initialPhotoUrl: string | null;
   // Only meaningful for monthly_total
@@ -150,7 +154,9 @@ function DailyToggleRow({
   initialCompleted,
   initialPhotoUrl,
 }: CheckinRowProps) {
-  const [completed, setCompleted] = useState(initialCompleted);
+  // Tri-state: null = unmarked (neutral), true = done, false = explicit
+  // "did not do" (the only state that draws a strike).
+  const [state, setState] = useState<boolean | null>(initialCompleted);
   const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl);
   const [isPending, startTransition] = useTransition();
   const [isUploading, setUploading] = useState(false);
@@ -158,20 +164,34 @@ function DailyToggleRow({
   const playSound = useSounds();
   const dayCelebration = useDayCelebration();
 
-  function toggle(next: boolean) {
-    setCompleted(next);
-    dayCelebration?.setCompletion(activityId, next);
+  function apply(next: boolean | null) {
+    const prev = state;
+    setState(next);
+    dayCelebration?.setCompletion(activityId, next === true);
     startTransition(async () => {
       try {
-        await toggleCheckinAction({ activityId, date, completed: next });
-        playSound(next ? "riteChecked" : "riteUnchecked");
+        if (next === null) {
+          await clearCheckinAction({ activityId, date });
+          playSound("riteUnchecked");
+        } else {
+          await toggleCheckinAction({ activityId, date, completed: next });
+          playSound(next ? "riteChecked" : "riteUnchecked");
+        }
       } catch (err) {
-        setCompleted(!next);
-        dayCelebration?.setCompletion(activityId, !next);
+        setState(prev);
+        dayCelebration?.setCompletion(activityId, prev === true);
         const msg = err instanceof Error ? err.message : "Could not save";
         toast.error(msg);
       }
     });
+  }
+
+  function onDoneClick() {
+    apply(state === true ? null : true);
+  }
+
+  function onNotDoneClick() {
+    apply(state === false ? null : false);
   }
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -189,7 +209,7 @@ function DailyToggleRow({
     try {
       const url = await uploadProof(userId, activityId, date, file);
       setPhotoUrl(url);
-      setCompleted(true);
+      setState(true);
       dayCelebration?.setCompletion(activityId, true);
       playSound("proofInscribed");
       toast.success("Proof inscribed");
@@ -202,15 +222,18 @@ function DailyToggleRow({
     }
   }
 
-  const tone = completed
-    ? kind === "abstain"
-      ? "border-fallen/60 bg-fallen/10"
-      : "border-divine/60 bg-divine/10"
-    : kind === "abstain"
-      ? "border-fallen/40 bg-fallen/5"
-      : "border-divine/30 bg-divine/5";
+  const tone =
+    state === true
+      ? kind === "abstain"
+        ? "border-fallen/60 bg-fallen/10"
+        : "border-divine/60 bg-divine/10"
+      : state === false
+        ? "border-fallen/70 bg-fallen/15"
+        : kind === "abstain"
+          ? "border-fallen/30 bg-fallen/5"
+          : "border-divine/30 bg-divine/5";
   const doneLabel = kind === "abstain" ? "Refrained" : "Done";
-  const markLabel = kind === "abstain" ? "Mark refrained" : "Mark done";
+  const markDoneLabel = kind === "abstain" ? "Mark refrained" : "Mark done";
 
   return (
     <div
@@ -235,23 +258,30 @@ function DailyToggleRow({
         <Button
           type="button"
           size="sm"
-          variant={completed ? "default" : "outline"}
+          variant={state === true ? "default" : "outline"}
           disabled={isPending}
-          onClick={() => toggle(!completed)}
-          aria-pressed={completed}
+          onClick={onDoneClick}
+          aria-pressed={state === true}
           className={cn(
             "font-display tracking-widest",
-            completed && "gilded",
+            state === true && "gilded",
           )}
         >
-          {completed ? (
-            <>
-              <Check className="mr-2 h-4 w-4" />
-              {isPending ? "Saving…" : doneLabel}
-            </>
-          ) : (
-            isPending ? "Saving…" : markLabel
-          )}
+          <Check className="mr-2 h-4 w-4" />
+          {state === true ? (isPending ? "Saving…" : doneLabel) : markDoneLabel}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={state === false ? "destructive" : "outline"}
+          disabled={isPending}
+          onClick={onNotDoneClick}
+          aria-pressed={state === false}
+          className="font-display tracking-widest"
+          title="A strike is taken — but better an honest strike than a quiet forgetting."
+        >
+          <X className="mr-2 h-4 w-4" />
+          {state === false ? "Did not do" : "Mark did not do"}
         </Button>
         {photoUrl && <ProofThumbnail url={photoUrl} size="md" />}
         <input
@@ -292,7 +322,7 @@ function WeeklyTallyRow({
   weekStartIso,
   weekEndIso,
 }: CheckinRowProps) {
-  const [completed, setCompleted] = useState(initialCompleted);
+  const [completed, setCompleted] = useState<boolean>(initialCompleted === true);
   const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl);
   const [isPending, startTransition] = useTransition();
   const [isUploading, setUploading] = useState(false);
@@ -300,7 +330,7 @@ function WeeklyTallyRow({
   const playSound = useSounds();
   const dayCelebration = useDayCelebration();
 
-  const baseDone = Math.max(0, weekDoneSoFar - (initialCompleted ? 1 : 0));
+  const baseDone = Math.max(0, weekDoneSoFar - (initialCompleted === true ? 1 : 0));
   const previewDone = baseDone + (completed ? 1 : 0);
   const goal = weekTarget ?? 0;
   const ratio = goal > 0 ? Math.min(1, previewDone / goal) : 0;
@@ -311,8 +341,14 @@ function WeeklyTallyRow({
     dayCelebration?.setCompletion(activityId, next);
     startTransition(async () => {
       try {
-        await toggleCheckinAction({ activityId, date, completed: next });
-        playSound(next ? "tallyInscribed" : "riteUnchecked");
+        if (next) {
+          await toggleCheckinAction({ activityId, date, completed: true });
+          playSound("tallyInscribed");
+        } else {
+          // Clearing — no row at all keeps the day neutral in the tally.
+          await clearCheckinAction({ activityId, date });
+          playSound("riteUnchecked");
+        }
       } catch (err) {
         setCompleted(!next);
         dayCelebration?.setCompletion(activityId, !next);

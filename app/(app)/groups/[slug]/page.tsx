@@ -825,7 +825,9 @@ export default async function PantheonPage({ params }: PageProps) {
                                 ? "bg-fallen/80 text-primary-foreground"
                                 : cell?.state === "pending"
                                   ? "bg-divine/30 text-foreground"
-                                  : "bg-muted text-muted-foreground/60";
+                                  : cell?.state === "unmarked"
+                                    ? "bg-muted/60 text-muted-foreground border-dashed"
+                                    : "bg-muted text-muted-foreground/60";
                           return (
                             <div
                               key={d}

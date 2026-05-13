@@ -6,6 +6,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-05-13",
+    title: "Forgetting is no longer a sin — only the honest 'did not do' strikes",
+    items: [
+      "A day left unmarked no longer draws a strike upon thy ledger. The forgotten dusk, the silent dawn, the rite that simply slipped the mind — none of these now summon the falling-stone. Only a willing, deliberate inscription of 'did not do' is counted against thee, and even then with the same gravity as before.",
+      "Every daily rite now bears two buttons rather than one. The gold Done sets the rite as kept; a new crimson 'Did not do' button sets the rite as forsworn; pressing either a second time clears it back to the neutral hush. Honesty is honoured; absence is forgiven.",
+      "A new Codex of Days — /check-in/history — opens behind the altar, a full May calendar with each dusk tinted by its fate: gold for done, crimson for forsworn, divine-pale for grace, and a dashed muted tile for those still unmarked and awaiting thy hand. Tap any past day to inscribe its rites and catch up on what the running of life left undone.",
+      "Streaks now hold faith with the same rule: only the explicit 'did not do' breaks them. An unmarked day passes through the count as neutral, neither extending the streak nor severing it — and inscribing a forgotten day as Done from the Codex retroactively repairs the chain.",
+      "Quietly: existing penitents whose strikes were drawn from absence rather than choice now have those strikes lifted automatically, as the reckoning is recomputed from the ledger at every reading; the daily_checkins schema is unchanged. A new clearCheckinAction removes a day's inscription without writing a false one in its place, keeping the database tidy.",
+    ],
+  },
+  {
     date: "2026-05-03",
     title: "Tonight's keepsake — the pantheon crowns its proof",
     items: [

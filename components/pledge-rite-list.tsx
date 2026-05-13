@@ -21,7 +21,9 @@ export interface RiteRowProps {
   description: string;
   groupName: string;
   date: string;
-  initialCompleted: boolean;
+  // null = no inscription (neutral); true = done; false = explicit
+  // "did not do" (the only state that draws a strike).
+  initialCompleted: boolean | null;
   initialAmount: number | null;
   initialPhotoUrl: string | null;
   unit?: string | null;
@@ -52,7 +54,7 @@ export function PledgeRiteList({ date, rites }: PledgeRiteListProps) {
       ),
     [rites],
   );
-  const outstanding = togglable.filter((r) => !r.initialCompleted);
+  const outstanding = togglable.filter((r) => r.initialCompleted !== true);
   const hasOutstanding = outstanding.length > 0 && !allMarked;
 
   function markAll() {
